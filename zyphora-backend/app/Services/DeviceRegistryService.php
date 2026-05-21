@@ -1,35 +1,53 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\DeviceRegistry;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class DeviceRegistryService
 {
     public function assertCanRegister(string $deviceId): void
     {
-        $max = (int) config('zyphora.max_accounts_per_device', 2);
-        $row = DeviceRegistry::query()->find($deviceId);
+        $count = DeviceRegistry::where('device_id', $deviceId)
+            ->distinct('user_id')
+            ->count('user_id');
 
-        if ($row && (int) $row->account_count >= $max) {
-            abort(422, 'Device account limit reached.');
+        if ($count >= 2) {
+            throw ValidationException::withMessages([
+                'device' => 'Maximum 2 accounts allowed per device.'
+            ]);
         }
     }
 
-    public function attachUserDevice(User $user, string $deviceId): void
+    public function attachUserDevice(User $user, string $deviceId, Request $request = null): void
     {
-        if ($user->device_id === $deviceId) {
-            return;
-        }
+        $request = $request ?? request();
 
-        $this->assertCanRegister($deviceId);
+        DeviceRegistry::updateOrCreate(
+            [
+                'device_id' => $deviceId,
+                'user_id'   => $user->id,
+            ],
+            [
+                'ip_address'     => $request->ip(),
+                'user_agent'     => $request->userAgent(),
+                'location_city'  => $this->getCityFromIp($request->ip()),
+                'location_country' => $this->getCountryFromIp($request->ip()),
+                'last_used_at'   => now(),
+            ]
+        );
+    }
 
-        $row = DeviceRegistry::query()->firstOrNew(['device_id' => $deviceId]);
-        $row->account_count = (int) $row->account_count + 1;
-        $row->save();
+    private function getCityFromIp(?string $ip): ?string
+    {
+        // Optional: integrate freegeoip.app or similar
+        return null;
+    }
 
-        $user->device_id = $deviceId;
-        $user->save();
+    private function getCountryFromIp(?string $ip): ?string
+    {
+        return null;
     }
 }

@@ -3,27 +3,28 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DeviceRegistry extends Model
 {
-    protected $table = 'device_registry';
-
-    protected $primaryKey = 'device_id';
-
-    public $incrementing = false;
-
-    protected $keyType = 'string';
+    protected $table = 'device_registry';   // ← crucial
 
     protected $fillable = [
         'device_id',
-        'account_count',
-        'flagged',
+        'user_id',
+        'ip_address',
+        'user_agent',
+        'location_city',
+        'location_country',
+        'last_used_at',
     ];
 
-    protected function casts(): array
+    protected $casts = [
+        'last_used_at' => 'datetime',
+    ];
+
+    public function user(): BelongsTo
     {
-        return [
-            'flagged' => 'boolean',
-        ];
+        return $this->belongsTo(User::class);
     }
 }

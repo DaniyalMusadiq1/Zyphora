@@ -50,73 +50,62 @@ class AuthController extends Controller
     // REGISTER (Phone + Email + Username + Password)
     // ─────────────────────────────────────────────────────────────────────────────
 
+
     public function register(Request $request, DeviceRegistryService $devices)
     {
         $data = $request->validate([
-            'phone'         => ['required_without:email', 'nullable', 'string', 'min:8', 'max:32'],
-            'email'         => ['required_without:phone', 'nullable', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password'      => ['required', 'string', 'min:8', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'], // Strong password
-            'username'      => ['required', 'string', 'min:3', 'max:24', 'unique:users,name', 'alpha_dash'], // Unique username
-            'otp'           => ['required_with:phone', 'nullable', 'string', 'size:6'],
+            'email'         => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password'      => ['required', 'string', 'min:8', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'],
+            'username'      => ['required', 'string', 'min:3', 'max:24', 'unique:users,name', 'alpha_dash'],
             'device_id'     => ['required', 'string', 'max:128'],
-            'referrer_code' => ['nullable', 'string', 'max:64'],
+            'referral_code' => ['nullable', 'string', 'max:64'], // optional invite code
         ]);
 
-        // 1. Device Limit Check (Max 2 accounts per device)
+        // 1. Device limit check (max 2 accounts)
         $devices->assertCanRegister($data['device_id']);
 
-        // 2. Phone Verification (if provided)
-        $phoneHash = null;
-        if (!empty($data['phone'])) {
-            $normalized = preg_replace('/\D+/', '', $data['phone']);
-            $phoneHash  = hash('sha256', $normalized);
-            
-            // Check duplicate phone
-            if (User::where('phone_hash', $phoneHash)->exists()) {
-                throw ValidationException::withMessages(['phone' => ['Phone number already registered.']]);
-            }
-
-            // Verify OTP
-            $this->assertOtpValid($phoneHash, $data['otp']);
-        }
-
-        // 3. Create User
+        // 2. Create user
         $user = User::create([
-            'name'       => $data['username'], // Storing username in 'name' field as per model
-            'email'      => $data['email'] ?? null,
-            'phone_hash' => $phoneHash,
+            'name'       => $data['username'],
+            'email'      => $data['email'],
             'password'   => Hash::make($data['password']),
             'device_id'  => $data['device_id'],
             'joined_at'  => now(),
         ]);
 
-        // 4. Send Email Verification (if email provided)
-        if ($user->email) {
-            $user->sendEmailVerificationNotification();
+        // 3. Generate human-readable referral code: APP_NAME_username
+        $appName = strtoupper(config('app.name', 'ZYPHORA'));
+        $baseCode = $appName . '_' . $data['username'];
+        $uniqueCode = $baseCode;
+        $counter = 1;
+        while (User::where('referral_code', $uniqueCode)->exists()) {
+            $uniqueCode = $baseCode . ($counter++);
         }
+        $user->referral_code = $uniqueCode;
+        $user->save();
 
-        // 5. Bootstrap Relations
+        // 4. Bootstrap relations
         UserScore::firstOrCreate(['user_id' => $user->id]);
         Streak::firstOrCreate(['user_id' => $user->id]);
         FraudScore::firstOrCreate(['user_id' => $user->id]);
 
-        // 6. Handle Referral
-        $referrerId = null;
-        if (! empty($data['referrer_code'])) {
-            $referrerId = $this->decodeReferrer((string) $data['referrer_code']);
-            if ($referrerId) {
+        // 5. Handle referral (if someone invited this user)
+        if (!empty($data['referral_code'])) {
+            $referrer = User::where('referral_code', $data['referral_code'])->first();
+            if ($referrer && $referrer->id !== $user->id) {
                 Referral::firstOrCreate(
-                    ['referrer_id' => $referrerId, 'referee_id' => $user->id],
+                    ['referrer_id' => $referrer->id, 'referee_id' => $user->id],
                     ['quality_score' => 0, 'gamma_penalty' => 1]
                 );
-                User::where('id', $user->id)->update(['referrer_id' => $referrerId]);
+                $user->referrer_id = $referrer->id;
+                $user->save();
             }
         }
 
-        // 7. Attach Device
-        $devices->attachUserDevice($user, $data['device_id']);
+        // 6. Attach device (store IP, user agent, location)
+        $devices->attachUserDevice($user, $data['device_id'], $request);
 
-        // 8. Issue Token
+        // 7. Issue token
         $token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([
@@ -124,55 +113,10 @@ class AuthController extends Controller
             'user_id'       => $user->id,
             'username'      => $user->name,
             'email'         => $user->email,
-            'referral_code' => $this->encodeReferrer($user->id),
-            'message'       => $user->email ? 'Registration successful. Please verify your email.' : 'Registration successful.',
+            'referral_code' => $user->referral_code,
+            'message'       => 'Registration successful.',
         ]);
     }
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // LOGIN (Phone + OTP)
-    // ─────────────────────────────────────────────────────────────────────────────
-
-    public function login(Request $request)
-    {
-        $data = $request->validate([
-            'phone'     => ['required', 'string'],
-            'otp'       => ['required', 'string', 'size:6'],
-            'device_id' => ['required', 'string', 'max:128'],
-        ]);
-
-        $normalized = preg_replace('/\D+/', '', $data['phone']);
-        $phoneHash  = hash('sha256', $normalized);
-
-        $user = User::where('phone_hash', $phoneHash)->first();
-
-        if (! $user) {
-            throw ValidationException::withMessages(['phone' => ['Invalid credentials.']]);
-        }
-
-        if ($user->is_banned) {
-            abort(403, 'Account suspended.');
-        }
-
-        $this->assertOtpValid($phoneHash, $data['otp']);
-
-        // Attach device if not already attached (soft logic)
-        // Service handles checks
-        app(DeviceRegistryService::class)->attachUserDevice($user, $data['device_id']);
-
-        $token = $user->createToken('mobile')->plainTextToken;
-
-        return response()->json([
-            'token'         => $token,
-            'user_id'       => $user->id,
-            'username'      => $user->name,
-            'referral_code' => $this->encodeReferrer($user->id),
-        ]);
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // LOGIN EMAIL
-    // ─────────────────────────────────────────────────────────────────────────────
 
     public function loginEmail(Request $request)
     {
@@ -184,7 +128,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $data['email'])->first();
 
-        if (! $user || ! Hash::check($data['password'], $user->password)) {
+        if (!$user || !Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages(['email' => ['Invalid credentials.']]);
         }
 
@@ -192,7 +136,8 @@ class AuthController extends Controller
             abort(403, 'Account suspended.');
         }
 
-        app(DeviceRegistryService::class)->attachUserDevice($user, $data['device_id']);
+        // Device limit check is not applied for login (only registration)
+        app(DeviceRegistryService::class)->attachUserDevice($user, $data['device_id'], $request);
 
         $token = $user->createToken('mobile')->plainTextToken;
 
@@ -200,7 +145,7 @@ class AuthController extends Controller
             'token'         => $token,
             'user_id'       => $user->id,
             'username'      => $user->name,
-            'referral_code' => $this->encodeReferrer($user->id),
+            'referral_code' => $user->referral_code,
         ]);
     }
 
@@ -234,5 +179,20 @@ class AuthController extends Controller
         }
         $raw = base64_decode($b64, true);
         return ($raw !== false && ctype_digit($raw)) ? (int) $raw : null;
+    }
+    public function me(Request $request)
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'id'             => $user->id,
+            'name'           => $user->name,
+            'email'          => $user->email,
+            'phone'          => $user->phone_hash ? 'registered' : null,
+            'referral_code'  => $this->encodeReferrer($user->id),
+            'joined_at'      => $user->joined_at,
+            'is_banned'      => $user->is_banned,
+            'fraud_score'    => $user->fraud_score,
+        ]);
     }
 }

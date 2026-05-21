@@ -29,6 +29,7 @@ class User extends Authenticatable
         'is_banned',
         'referrer_id',
         'password',
+        'referral_code',
     ];
 
     protected $hidden = [
