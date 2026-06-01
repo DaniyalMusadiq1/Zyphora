@@ -17,6 +17,7 @@ import streakReducer from './slices/streakSlice';
 import referralReducer from './slices/referralSlice';
 import taskReducer from './slices/taskSlice';
 import leaderReducer from './slices/leaderSlice';
+import kycReducer from './slices/kycSlice';
 import { setAuthTokenGetter, setDeviceIdGetter } from './api';
 
 const rootReducer = combineReducers({
@@ -26,6 +27,7 @@ const rootReducer = combineReducers({
   referral: referralReducer,
   task: taskReducer,
   leader: leaderReducer,
+  kyc: kycReducer,
 });
 
 const persistConfig = {

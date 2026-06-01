@@ -17,6 +17,7 @@ import DashboardScreen from '../screens/DashboardScreen';
 import TasksScreen from '../screens/TasksScreen'; // Updated to map to spec
 import FriendsScreen from '../screens/FriendsScreen'; // Updated to map to spec
 import WalletScreen from '../screens/WalletScreen'; // Updated to map to spec
+import KycScreen from '../screens/KycScreen'; // KYC Verification screen
 
 import api from '../redux/api';
 import { setProfile } from '../redux/slices/authSlice';
@@ -26,6 +27,7 @@ import OnboardScreen from '../screens/Onboardscreen';
 
 const AuthStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const MainStack = createNativeStackNavigator();
 
 function AuthFlow() {
   return (
@@ -148,6 +150,15 @@ function MainTabs() {
   );
 }
 
+function MainStackNav() {
+  return (
+    <MainStack.Navigator screenOptions={{ headerShown: false }}>
+      <MainStack.Screen name="MainTabs" component={MainTabs} />
+      <MainStack.Screen name="KYC" component={KycScreen} />
+    </MainStack.Navigator>
+  );
+}
+
 function AppContent() {
   const dispatch = useDispatch();
   const token = useSelector((s) => s.auth.token);
@@ -194,7 +205,7 @@ function AppContent() {
     );
   }
 
-  return <MainTabs />;
+  return <MainStackNav />;
 }
 
 export default function AppNavigator() {
