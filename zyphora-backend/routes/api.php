@@ -29,6 +29,8 @@ Route::middleware([
     'fraud.check',
 ])->group(function () {
     Route::get('/score', [ScoreController::class, 'show']);
+    Route::get('/streak', [StreakController::class, 'show']);
+    Route::post('/streak/checkin', [StreakController::class, 'checkin']);
 
     Route::post('/mine/checkin', [MineController::class, 'checkin']);
     Route::get('/mine/tasks', [TaskController::class, 'index']);
@@ -40,6 +42,8 @@ Route::middleware([
     Route::get('/leaderboard', [LeaderboardController::class, 'index']);
 
     Route::post('/kyc/initiate', [KycController::class, 'initiate']);
+    Route::get('/kyc/status', [KycController::class, 'status']);
+    Route::post('/kyc/submit', [KycController::class, 'submit']);
 
     Route::get('/governance/proposals', [GovernanceController::class, 'proposals']);
     Route::post('/governance/vote', [GovernanceController::class, 'vote']);
