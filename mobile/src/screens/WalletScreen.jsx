@@ -1,132 +1,237 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import Svg, { Path, Rect, Circle } from 'react-native-svg';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from '../components/SharedComponents'; // adjust path if needed
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Alert } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import { Ionicons } from '@expo/vector-icons';
+import { fetchScore } from "../store/slices/scoreSlice";
+import { fetchKycStatus } from "../store/slices/kycSlice";
 
 export default function WalletScreen({ navigation }) {
-  const insets = useSafeAreaInsets();
-  const topPadding = insets.top + 10;
+  const dispatch = useDispatch();
+  const { score, loading: scoreLoading, error: scoreError } = useSelector((state) => state.score);
+  const { kycStatus, loading: kycLoading } = useSelector((state) => state.kyc);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // KYC steps (mock data)
-  const kycSteps = [
-    { label: 'Mobile', done: true },
-    { label: 'Identity', done: false },
-    { label: 'Liveness', done: false },
-  ];
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  const completedCount = kycSteps.filter((s) => s.done).length;
+  const loadData = async () => {
+    try {
+      await Promise.all([
+        dispatch(fetchScore()).unwrap(),
+        dispatch(fetchKycStatus()).unwrap()
+      ]);
+    } catch (err) {
+      // Error handled by middleware
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
+
+  const handleWithdraw = () => {
+    Alert.alert(
+      "Withdraw Funds",
+      "Minimum withdrawal amount is 1000 ZPH. Would you like to proceed?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Proceed", 
+          onPress: () => navigation.navigate('Kyc') 
+        }
+      ]
+    );
+  };
+
+  const getKycStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'verified': return '#34D399';
+      case 'pending': return '#F59E0B';
+      case 'rejected': return '#F87171';
+      default: return '#6366F1';
+    }
+  };
+
+  const getKycStatusIcon = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'verified': return 'checkmark-circle';
+      case 'pending': return 'time';
+      case 'rejected': return 'close-circle';
+      default: return 'shield-outline';
+    }
+  };
+
+  if (scoreLoading && !score) {
+    return (
+      <View className="flex-1 bg-[#070B14] items-center justify-center">
+        <ActivityIndicator size="large" color="#6366F1" />
+        <Text className="text-gray-400 mt-4">Loading wallet...</Text>
+      </View>
+    );
+  }
 
   return (
-    <View className="flex-1 bg-[#070B14]" style={{ paddingTop: topPadding }}>
-      <StatusBar />
-
-      <View className="flex-1 px-5 justify-between pb-6">
+    <View className="flex-1 bg-[#070B14]">
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366F1" />}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
         {/* Header */}
-        <View className="flex-row justify-between items-center mb-4">
-          <Text className="text-[24px] font-bold text-white tracking-tight">Wallet</Text>
-          <View className="bg-white/[0.05] border border-white/[0.1] rounded-full px-3 py-1.5">
-            <Text className="text-[10px] font-medium text-white/60">Phase III</Text>
+        <View className="px-5 pt-6 pb-4">
+          <Text className="text-[28px] font-bold text-white">Wallet</Text>
+          <Text className="text-gray-400 text-sm mt-1">Manage your earnings and withdrawals</Text>
+        </View>
+
+        {/* Balance Card */}
+        <View className="mx-5 mb-4 p-6 rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700 shadow-lg shadow-indigo-900/40">
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-indigo-200 text-sm font-medium">Total Balance</Text>
+            <TouchableOpacity className="p-2 bg-white/10 rounded-full">
+              <Ionicons name="eye" size={18} color="white" />
+            </TouchableOpacity>
+          </View>
+          <Text className="text-4xl font-bold text-white mb-1">
+            {(score?.total_points || 0).toLocaleString()}
+          </Text>
+          <Text className="text-indigo-200 text-sm">ZPH Tokens</Text>
+          
+          <View className="flex-row gap-3 mt-6">
+            <TouchableOpacity 
+              onPress={handleWithdraw}
+              disabled={(score?.total_points || 0) < 1000}
+              className={`flex-1 py-3.5 rounded-xl items-center flex-row justify-center gap-2 ${
+                (score?.total_points || 0) >= 1000 
+                  ? 'bg-white' 
+                  : 'bg-white/30'
+              }`}
+            >
+              <Ionicons 
+                name="wallet-outline" 
+                size={20} 
+                color={(score?.total_points || 0) >= 1000 ? '#4F46E5' : '#9CA3AF'} 
+              />
+              <Text className={`font-bold ${
+                (score?.total_points || 0) >= 1000 ? 'text-indigo-700' : 'text-gray-500'
+              }`}>
+                Withdraw
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity className="flex-1 py-3.5 rounded-xl bg-white/10 border border-white/20 items-center flex-row justify-center gap-2">
+              <Ionicons name="swap-horizontal" size={20} color="white" />
+              <Text className="font-bold text-white">Swap</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Airdrop Card – No progress bar */}
-        <View className="bg-[#111827] border border-white/[0.1] rounded-3xl p-5 mb-5 overflow-hidden">
-          {/* Decorative blobs */}
-          <View className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-indigo-500/10" />
-          <View className="absolute -bottom-8 -left-8 w-24 h-24 rounded-full bg-purple-500/10" />
-
-          <View className="flex-row items-center justify-between mb-3 z-10">
-            <Text className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">Airdrop</Text>
-            <View className="flex-row items-center gap-1.5 bg-white/[0.05] border border-white/[0.1] rounded-full px-3 py-1">
-              <Svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round">
-                <Rect x="3" y="11" width="18" height="11" rx="2" />
-                <Path d="M7 11V7a5 5 0 0110 0v4" />
-              </Svg>
-              <Text className="text-[10px] font-medium text-white/60">Locked</Text>
-            </View>
-          </View>
-
-          {/* Token icon & Coming Soon text */}
-          <View className="items-center my-4 z-10">
-            <View className="w-16 h-16 rounded-2xl bg-white/[0.05] border border-white/[0.1] items-center justify-center mb-3">
-              <Svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round">
-                <Circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.4)" />
-                <Path d="M12 6v12M8 12h8" stroke="white" />
-              </Svg>
-            </View>
-            <Text className="text-[20px] font-bold text-white mb-1">Coming Soon</Text>
-            <Text className="text-[12px] text-white/40 text-center max-w-[240px] leading-5">
-              Your ZYP tokens will be airdropped at launch. Keep mining to increase your share.
-            </Text>
-          </View>
-        </View>
-
-        {/* KYC Verification – Redesigned */}
-        <TouchableOpacity
-          className="bg-[#111827] border border-white/[0.1] rounded-2xl p-4 mb-5"
-          activeOpacity={0.8}
-          onPress={() => navigation.navigate('KYC')}
+        {/* KYC Status Card */}
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('Kyc')}
+          className="mx-5 mb-4 p-5 rounded-2xl bg-[#1E293B] border border-gray-800 active:scale-[0.98]"
         >
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">KYC Verification</Text>
-            <View className="flex-row items-center gap-1">
-              <Text className="text-[11px] font-semibold text-white/70">Manage</Text>
-              <Svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <Path d="M9 18l6-6-6-6" />
-              </Svg>
-            </View>
-          </View>
-
-          {/* Step indicators – luxury dots with connecting line */}
           <View className="flex-row items-center justify-between mb-3">
-            {kycSteps.map((step, idx) => (
-              <React.Fragment key={idx}>
-                {/* Step circle */}
-                <View className="items-center flex-1">
-                  <View
-                    className={`w-8 h-8 rounded-full items-center justify-center ${
-                      step.done
-                        ? 'bg-emerald-400'
-                        : 'bg-white/[0.08] border border-white/[0.15]'
-                    }`}
-                  >
-                    {step.done ? (
-                      <Svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round">
-                        <Path d="M20 6 9 17 4 12" />
-                      </Svg>
-                    ) : (
-                      <Text className="text-[11px] font-bold text-white/50">{idx + 1}</Text>
-                    )}
-                  </View>
-                  <Text
-                    className={`text-[10px] mt-1 ${
-                      step.done ? 'text-white/70' : 'text-white/30'
-                    }`}
-                  >
-                    {step.label}
-                  </Text>
-                </View>
-
-                {/* Connecting line between steps */}
-                {idx < kycSteps.length - 1 && (
-                  <View className="h-px flex-1 bg-white/[0.08]" style={{ marginBottom: 20 }} />
-                )}
-              </React.Fragment>
-            ))}
+            <View className="flex-row items-center gap-3">
+              <View className={`w-12 h-12 rounded-xl items-center justify-center`} 
+                style={{ backgroundColor: `${getKycStatusColor(kycStatus?.status)}20` }}>
+                <Ionicons 
+                  name={getKycStatusIcon(kycStatus?.status)} 
+                  size={24} 
+                  color={getKycStatusColor(kycStatus?.status)} 
+                />
+              </View>
+              <View>
+                <Text className="text-gray-400 text-xs uppercase tracking-wider font-semibold">KYC Status</Text>
+                <Text className="text-white font-bold text-lg">
+                  {kycStatus?.status === 'verified' ? 'Verified' : 
+                   kycStatus?.status === 'pending' ? 'In Review' : 
+                   kycStatus?.status === 'rejected' ? 'Rejected' : 'Not Started'}
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#6366F1" />
           </View>
-
-          {/* Completion summary */}
-          <View className="flex-row justify-between pt-3 border-t border-white/[0.08]">
-            <Text className="text-[10px] text-white/40">Completion</Text>
-            <Text className="text-[10px] text-white/60 font-medium">
-              {completedCount} of {kycSteps.length} steps done
-            </Text>
-          </View>
+          
+          {kycStatus?.status !== 'verified' && (
+            <View className="mt-3 p-3 rounded-xl bg-indigo-900/20 border border-indigo-500/20">
+              <Text className="text-indigo-300 text-xs">
+                Complete KYC verification to unlock withdrawals and earn bonus points!
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
 
-        <View style={{ height: 20 }} />
-      </View>
+        {/* Stats Grid */}
+        <View className="px-5 mb-4">
+          <Text className="text-gray-400 text-xs uppercase tracking-wider font-semibold mb-3">Earnings Overview</Text>
+          <View className="flex-row gap-3">
+            {[
+              { label: "Total Earned", value: (score?.total_earned || 0).toLocaleString(), icon: "trending-up", color: "#10B981" },
+              { label: "Withdrawn", value: (score?.withdrawn || 0).toLocaleString(), icon: "arrow-down-circle", color: "#F59E0B" },
+              { label: "Pending", value: (score?.pending || 0).toLocaleString(), icon: "time", color: "#6366F1" },
+              { label: "Bonus", value: (score?.bonus || 0).toLocaleString(), icon: "gift", color: "#EC4899" },
+            ].map((stat, idx) => (
+              <View key={idx} className="flex-1 bg-[#1E293B] border border-gray-800 rounded-xl p-3">
+                <View className={`w-8 h-8 rounded-lg mb-2 items-center justify-center`} 
+                  style={{ backgroundColor: `${stat.color}20` }}>
+                  <Ionicons name={stat.icon} size={16} color={stat.color} />
+                </View>
+                <Text className="text-[8px] font-medium text-gray-400 uppercase">{stat.label}</Text>
+                <Text className="text-white font-bold text-sm mt-0.5">{stat.value}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Recent Transactions */}
+        <View className="px-5">
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Recent Activity</Text>
+            <TouchableOpacity>
+              <Text className="text-indigo-400 text-xs font-semibold">View All</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className="bg-[#1E293B] border border-gray-800 rounded-2xl overflow-hidden">
+            {[
+              { type: "Streak Bonus", amount: "+50", date: "Today", icon: "flame", color: "#F59E0B" },
+              { type: "Task Completed", amount: "+100", date: "Yesterday", icon: "checkmark-done", color: "#10B981" },
+              { type: "Referral Reward", amount: "+25", date: "2 days ago", icon: "people", color: "#6366F1" },
+              { type: "Withdrawal", amount: "-500", date: "5 days ago", icon: "arrow-down", color: "#F87171" },
+            ].map((tx, idx) => (
+              <View 
+                key={idx} 
+                className={`flex-row items-center justify-between p-4 ${idx !== 3 ? 'border-b border-gray-800' : ''}`}
+              >
+                <View className="flex-row items-center gap-3">
+                  <View className={`w-10 h-10 rounded-xl items-center justify-center`} 
+                    style={{ backgroundColor: `${tx.color}20` }}>
+                    <Ionicons name={tx.icon} size={18} color={tx.color} />
+                  </View>
+                  <View>
+                    <Text className="text-white font-semibold text-sm">{tx.type}</Text>
+                    <Text className="text-gray-500 text-xs">{tx.date}</Text>
+                  </View>
+                </View>
+                <Text className={`font-bold ${tx.amount.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>
+                  {tx.amount}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Error Display */}
+        {(scoreError) && (
+          <View className="mx-5 mt-4 p-4 rounded-xl bg-red-900/20 border border-red-800/50 flex-row items-center gap-3">
+            <Ionicons name="alert-circle" size={20} color="#F87171" />
+            <Text className="text-red-400 text-sm flex-1">{scoreError}</Text>
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 }
