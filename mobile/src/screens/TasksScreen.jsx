@@ -1,27 +1,35 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, ScrollView, RefreshControl, Alert, ActivityIndicator } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchTasks, completeTask } from "../store/slices/taskSlice";
+import { fetchTasks, completeTask, clearError } from "../redux/slices/taskSlice";
 import { Ionicons } from '@expo/vector-icons';
 
 export default function TasksScreen({ navigation }) {
   const dispatch = useDispatch();
-  const { tasks, loading, error } = useSelector((state) => state.task);
+  const { tasks, totalTasks, completedCount, pendingCount, loading, completingId, error } = useSelector((state) => state.task);
   const [filter, setFilter] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
-  const [completingId, setCompletingId] = useState(null);
 
-  const filters = ["All", "Pending", "Completed", "Failed"];
+  const filters = ["All", "Pending", "Completed", "Verifying"];
 
   useEffect(() => {
     loadTasks();
   }, []);
 
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        dispatch(clearError());
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   const loadTasks = async () => {
     try {
       await dispatch(fetchTasks()).unwrap();
     } catch (err) {
-      // Error handled by middleware
+      // Error handled by slice
     }
   };
 
@@ -32,7 +40,7 @@ export default function TasksScreen({ navigation }) {
   };
 
   const handleCompleteTask = async (task) => {
-    if (completingId || task.status === 'completed') return;
+    if (completingId || task.is_completed || task.status === 'verifying') return;
 
     Alert.alert(
       "Complete Task",
@@ -42,15 +50,12 @@ export default function TasksScreen({ navigation }) {
         {
           text: "Submit",
           onPress: async () => {
-            setCompletingId(task.id);
             try {
               await dispatch(completeTask(task.id)).unwrap();
-              Alert.alert("Success", "Task submitted for verification! Points will be awarded upon approval.");
+              Alert.alert("Success", "Task submitted! Points will be awarded upon verification.");
               loadTasks();
             } catch (err) {
-              Alert.alert("Error", err.message || "Failed to submit task");
-            } finally {
-              setCompletingId(null);
+              // Error shown in UI
             }
           }
         }
@@ -58,16 +63,24 @@ export default function TasksScreen({ navigation }) {
     );
   };
 
-  const filtered = filter === "All" ? tasks : tasks.filter((t) => t.status.toLowerCase() === filter.toLowerCase());
+  const filtered = filter === "All" 
+    ? tasks 
+    : tasks.filter((t) => {
+        const status = t.status?.toLowerCase();
+        if (filter === "Pending") return status === 'pending' || !t.is_completed;
+        if (filter === "Completed") return t.is_completed && status === 'verified';
+        if (filter === "Verifying") return status === 'pending_verification' || status === 'verifying';
+        return true;
+      });
 
-  const getStatusBadgeClasses = (status) => {
+  const getStatusBadgeClasses = (status, isCompleted) => {
+    if (isCompleted && status === 'verified') {
+      return { view: "bg-[rgba(52,211,153,.1)] border-[rgba(52,211,153,.25)]", text: "text-[#34D399]" };
+    }
     switch (status?.toLowerCase()) {
       case "pending":
+      case "pending_verification":
         return { view: "bg-[rgba(245,158,11,.1)] border-[rgba(245,158,11,.25)]", text: "text-[#F59E0B]" };
-      case "completed":
-        return { view: "bg-[rgba(52,211,153,.1)] border-[rgba(52,211,153,.25)]", text: "text-[#34D399]" };
-      case "failed":
-        return { view: "bg-[rgba(248,113,113,.1)] border-[rgba(248,113,113,.25)]", text: "text-[#F87171]" };
       case "verifying":
         return { view: "bg-[rgba(99,102,241,.1)] border-[rgba(99,102,241,.25)]", text: "text-[#6366F1]" };
       default:
@@ -82,8 +95,9 @@ export default function TasksScreen({ navigation }) {
       app: { name: "download-outline", color: "#6366F1" },
       referral: { name: "people-outline", color: "#10B981" },
       discord: { name: "chatbubbles-outline", color: "#5865F2" },
+      general: { name: "checkmark-circle-outline", color: "#6366F1" },
     };
-    return icons[type] || { name: "checkmark-circle-outline", color: "#6366F1" };
+    return icons[type] || icons.general;
   };
 
   if (loading && tasks.length === 0) {
@@ -114,13 +128,13 @@ export default function TasksScreen({ navigation }) {
           <View>
             <Text className="text-gray-400 text-xs">Progress</Text>
             <Text className="text-white font-bold text-lg">
-              {tasks.filter(t => t.status?.toLowerCase() === 'completed').length} / {tasks.length} done
+              {completedCount} / {totalTasks} done
             </Text>
           </View>
           <View className="flex-row items-center gap-2">
             <Ionicons name="trophy" size={20} color="#F59E0B" />
             <Text className="text-[#F59E0B] font-bold">
-              {tasks.reduce((sum, t) => t.status?.toLowerCase() === 'completed' ? sum + (t.points || 0) : sum, 0)} pts
+              {tasks.filter(t => t.is_completed).reduce((sum, t) => sum + (t.points || 0), 0)} pts
             </Text>
           </View>
         </View>
@@ -164,15 +178,15 @@ export default function TasksScreen({ navigation }) {
           </View>
         ) : (
           filtered.map((t) => {
-            const badge = getStatusBadgeClasses(t.status);
-            const icon = getIconForTask(t.type);
+            const badge = getStatusBadgeClasses(t.status, t.is_completed);
+            const icon = getIconForTask(t.type || t.category || 'general');
             const isCompleting = completingId === t.id;
 
             return (
               <TouchableOpacity
                 key={t.id}
                 onPress={() => handleCompleteTask(t)}
-                disabled={t.status?.toLowerCase() === 'completed' || t.status?.toLowerCase() === 'verifying' || isCompleting}
+                disabled={t.is_completed || t.status === 'verifying' || isCompleting}
                 className="mx-5 mb-3 bg-[#111827] border border-white/[0.08] rounded-2xl p-4 active:scale-[0.98] transition-transform"
               >
                 <View className="flex-row items-start gap-3 mb-3">
@@ -201,7 +215,9 @@ export default function TasksScreen({ navigation }) {
                     {isCompleting ? (
                       <ActivityIndicator size="small" color="#F59E0B" />
                     ) : (
-                      <Text className={`text-[11px] font-bold ${badge.text}`}>{t.status || "Pending"}</Text>
+                      <Text className={`text-[11px] font-bold ${badge.text}`}>
+                        {t.is_completed ? 'Completed' : t.status?.replace('_', ' ') || 'Pending'}
+                      </Text>
                     )}
                   </View>
                 </View>

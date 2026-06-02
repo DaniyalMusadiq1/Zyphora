@@ -23,24 +23,37 @@ class TaskController extends Controller
             $ttl = (int) config('zyphora.tasks_cache_ttl', 3600);
             $user = $request->user();
 
-            $tasks = Cache::remember('tasks:list:'.$user->id, $ttl, function () {
-                return Task::query()->orderBy('category')->orderBy('weight_w', 'desc')->get();
+            // Get active tasks with proper filtering
+            $tasks = Cache::remember('tasks:list:'.$user->id, $ttl, function () use ($user) {
+                return Task::query()
+                    ->active()
+                    ->orderBy('category')
+                    ->orderBy('weight_w', 'desc')
+                    ->get();
             });
 
-            // Get user's completed task IDs
-            $completedIds = $user->taskCompletions()->pluck('task_id')->toArray();
+            // Get user's completed task IDs with status
+            $completedTasks = $user->taskCompletions()
+                ->select('task_id', 'status', 'completed_at')
+                ->get()
+                ->keyBy('task_id');
 
             // Enrich tasks with completion status
-            $enrichedTasks = $tasks->map(function ($task) use ($completedIds) {
+            $enrichedTasks = $tasks->map(function ($task) use ($completedTasks) {
+                $completion = $completedTasks->get($task->id);
+                
                 return [
                     'id' => $task->id,
                     'title' => $task->title,
                     'description' => $task->description,
-                    'category' => $task->category,
+                    'category' => $task->category ?? 'general',
+                    'type' => $task->category ?? 'general',
                     'weight_w' => (float) $task->weight_w,
                     'rarity_factor' => (float) $task->rarity_factor,
-                    'points' => (float) $task->weight_w * (float) $task->rarity_factor,
-                    'is_completed' => in_array($task->id, $completedIds),
+                    'points' => round((float) $task->weight_w * (float) $task->rarity_factor, 2),
+                    'is_completed' => $completion !== null,
+                    'status' => $completion?->status ?? 'pending',
+                    'completed_at' => $completion?->completed_at?->toIso8601String(),
                     'icon' => $task->icon ?? 'task',
                     'action_url' => $task->action_url,
                     'verification_type' => $task->verification_type ?? 'auto',
@@ -53,6 +66,7 @@ class TaskController extends Controller
                     'tasks' => $enrichedTasks,
                     'total_tasks' => $enrichedTasks->count(),
                     'completed_count' => $enrichedTasks->where('is_completed', true)->count(),
+                    'pending_count' => $enrichedTasks->where('is_completed', false)->count(),
                 ],
             ], 200);
         } catch (\Exception $e) {
@@ -70,6 +84,13 @@ class TaskController extends Controller
             $user = $request->user();
             $task = Task::query()->findOrFail($id);
 
+            if (!$task->is_active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This task is no longer available',
+                ], 400);
+            }
+
             if ($user->taskCompletions()->where('task_id', $task->id)->exists()) {
                 return response()->json([
                     'success' => false,
@@ -78,17 +99,26 @@ class TaskController extends Controller
             }
 
             // Validate task completion if needed (for manual verification tasks)
+            $proofData = null;
+            $screenshot = null;
+            
             if ($task->verification_type === 'manual') {
                 $data = $request->validate([
                     'proof_data' => ['nullable', 'string'],
                     'screenshot' => ['nullable', 'string'],
                 ]);
+                $proofData = $data['proof_data'] ?? null;
+                $screenshot = $data['screenshot'] ?? null;
             }
 
-            DB::transaction(function () use ($user, $task, $momentum, $streaks) {
+            DB::transaction(function () use ($user, $task, $momentum, $streaks, $proofData, $screenshot) {
+                $status = $task->verification_type === 'auto' ? 'verified' : 'pending_verification';
+                
                 $user->taskCompletions()->attach($task->id, [
                     'completed_at' => now(),
-                    'status' => 'verified',
+                    'status' => $status,
+                    'proof_data' => $proofData,
+                    'screenshot' => $screenshot,
                 ]);
 
                 $points = (float) $task->weight_w * (float) $task->rarity_factor;
@@ -113,12 +143,13 @@ class TaskController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Task completed successfully! Earned {$task->weight_w * $task->rarity_factor} points",
+                'message' => "Task completed successfully! Earned ".round($task->weight_w * $task->rarity_factor, 2)." points",
                 'data' => [
                     'task_id' => $task->id,
                     'task_title' => $task->title,
-                    'points_earned' => (float) $task->weight_w * (float) $task->rarity_factor,
+                    'points_earned' => round((float) $task->weight_w * (float) $task->rarity_factor, 2),
                     'new_score' => (float) ($freshScore?->total_pts ?? 0),
+                    'status' => $task->verification_type === 'auto' ? 'verified' : 'pending_verification',
                 ],
             ], 200);
         } catch (ValidationException $e) {
