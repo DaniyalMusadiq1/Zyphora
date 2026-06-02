@@ -9,7 +9,7 @@ import api from '../api';
  */
 export const fetchTasks = createAsyncThunk(
   'tasks/fetchTasks',
-  async (category = null, { rejectWithValue }) => {
+  async (category = null, { rejectWithValue, getState }) => {
     try {
       const params = category ? { category } : {};
       const response = await api.get('/mine/tasks', { params });

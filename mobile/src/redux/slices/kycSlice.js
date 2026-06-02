@@ -2,13 +2,9 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../api';
 
 // Async Thunks
-
-/**
- * Fetches the current user's KYC status and details
- */
 export const fetchKycStatus = createAsyncThunk(
   'kyc/fetchStatus',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
       const response = await api.get('/kyc/status');
       return response.data.data || response.data;
@@ -18,10 +14,6 @@ export const fetchKycStatus = createAsyncThunk(
   }
 );
 
-/**
- * Submits KYC documents (Front, Back, Selfie)
- * Handles multipart/form-data automatically via FormData
- */
 export const submitKycDocuments = createAsyncThunk(
   'kyc/submitDocuments',
   async ({ documentType, frontImage, backImage, selfieImage }, { rejectWithValue }) => {
