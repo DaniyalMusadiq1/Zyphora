@@ -88,6 +88,14 @@ return new class extends Migration
             $table->string('provider_reference')->nullable();
             $table->unsignedTinyInteger('tier')->default(0);
             $table->string('status')->default('pending');
+            $table->string('document_type')->nullable();
+            $table->string('document_front')->nullable();
+            $table->string('document_back')->nullable();
+            $table->string('selfie')->nullable();
+            $table->boolean('liveness_check')->default(false);
+            $table->text('admin_notes')->nullable();
+            $table->foreignId('reviewed_by')->nullable()->constrained('admins')->nullOnDelete();
+            $table->timestamp('reviewed_at')->nullable();
             $table->timestamps();
         });
 
@@ -115,9 +123,14 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
+            $table->string('category')->default('general');
+            $table->string('icon')->default('task');
+            $table->string('action_url')->nullable();
+            $table->string('verification_type')->default('auto');
             $table->decimal('weight_w', 12, 6)->default(1);
             $table->decimal('rarity_factor', 12, 6)->default(1);
             $table->boolean('is_premium')->default(false);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
 
@@ -126,6 +139,9 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('task_id')->constrained('tasks')->cascadeOnDelete();
             $table->timestamp('completed_at')->useCurrent();
+            $table->string('status')->default('verified');
+            $table->text('proof_data')->nullable();
+            $table->string('screenshot')->nullable();
             $table->timestamps();
             $table->unique(['user_id', 'task_id']);
         });

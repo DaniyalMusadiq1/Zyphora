@@ -1,21 +1,20 @@
 ```
 # Dependencies
 vendor/
-node_modules/
+composer.lock
 
-# Build artifacts
-public/build/
+# Laravel specific
 bootstrap/cache/
-storage/logs/
 storage/framework/cache/
 storage/framework/sessions/
 storage/framework/views/
-storage/app/public/
+storage/logs/
 
 # Environment
 .env
 .env.local
 .env.*
+!.env.example
 
 # IDE
 .vscode/
@@ -30,6 +29,9 @@ Thumbs.db
 # Logs
 *.log
 
-# Testing
-.phpunit.result.cache
+# Build artifacts
+node_modules/
+dist/
+build/
+target/
 ```
