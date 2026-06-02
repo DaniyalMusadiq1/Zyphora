@@ -6,7 +6,7 @@ export const fetchStreak = createAsyncThunk(
   'streak/fetchStreak',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/user/streak');
+      const response = await api.get('/streak');
       return response.data.data || response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch streak');
@@ -18,7 +18,7 @@ export const claimStreak = createAsyncThunk(
   'streak/claimStreak',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.post('/user/streak/claim');
+      const response = await api.post('/streak/checkin');
       return response.data.data || response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to claim streak');
@@ -40,6 +40,13 @@ const streakSlice = createSlice({
   name: 'streak',
   initialState,
   reducers: {
+    setStreak: (state, action) => {
+      state.data = action.payload;
+      state.currentStreak = action.payload?.current_streak || 0;
+      state.longestStreak = action.payload?.best_streak || 0;
+      state.lastClaimedAt = new Date().toISOString();
+      state.error = null;
+    },
     clearStreakError: (state) => {
       state.error = null;
     },
@@ -61,7 +68,7 @@ const streakSlice = createSlice({
         state.loading = false;
         state.data = action.payload;
         state.currentStreak = action.payload.current_streak || 0;
-        state.longestStreak = action.payload.longest_streak || 0;
+        state.longestStreak = action.payload.best_streak || 0;
         state.lastClaimedAt = action.payload.last_claimed_at || null;
         state.nextClaimAt = action.payload.next_claim_at || null;
       })
@@ -87,5 +94,5 @@ const streakSlice = createSlice({
   },
 });
 
-export const { clearStreakError, resetStreak } = streakSlice.actions;
+export const { clearStreakError, resetStreak, setStreak } = streakSlice.actions;
 export default streakSlice.reducer;
