@@ -6,7 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function TasksScreen({ navigation }) {
   const dispatch = useDispatch();
-  const { tasks, totalTasks, completedCount, pendingCount, loading, completingId, error } = useSelector((state) => state.task);
+  const { tasks = [], totalTasks, completedCount, pendingCount, loading, completingId, error } = useSelector((state) => state.task);
+  
   const [filter, setFilter] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -63,13 +64,13 @@ export default function TasksScreen({ navigation }) {
     );
   };
 
-  const filtered = filter === "All" 
-    ? tasks 
+  const filtered = filter === "All"
+    ? tasks
     : tasks.filter((t) => {
         const status = t.status?.toLowerCase();
-        if (filter === "Pending") return status === 'pending' || !t.is_completed;
-        if (filter === "Completed") return t.is_completed && status === 'verified';
-        if (filter === "Verifying") return status === 'pending_verification' || status === 'verifying';
+        if (filter === "Pending") return (!status || status === "pending") && !t.is_completed;
+        if (filter === "Completed") return t.is_completed && status === "verified";
+        if (filter === "Verifying") return status === "pending_verification" || status === "verifying";
         return true;
       });
 
@@ -140,8 +141,8 @@ export default function TasksScreen({ navigation }) {
         </View>
 
         {/* Filter tabs */}
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           className="mt-4 mb-2"
           contentContainerStyle={{ paddingHorizontal: 20 }}
@@ -151,8 +152,8 @@ export default function TasksScreen({ navigation }) {
               key={f}
               onPress={() => setFilter(f)}
               className={`px-5 py-2.5 mx-1 rounded-full ${
-                filter === f 
-                  ? "bg-indigo-600 border border-indigo-500" 
+                filter === f
+                  ? "bg-indigo-600 border border-indigo-500"
                   : "bg-[#1E293B] border border-gray-700"
               }`}
             >
@@ -201,7 +202,7 @@ export default function TasksScreen({ navigation }) {
                     <Text className="text-[12px] text-gray-400 mt-1 leading-5">{t.description}</Text>
                   </View>
                 </View>
-                
+
                 <View className="flex-row items-center justify-between border-t border-gray-800 pt-3">
                   <View className="flex-row items-center gap-2">
                     <View className="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/30 items-center justify-center">
@@ -210,7 +211,7 @@ export default function TasksScreen({ navigation }) {
                     <Text className="text-[14px] font-bold text-white">{t.points}</Text>
                     <Text className="text-[11px] text-gray-500">points</Text>
                   </View>
-                  
+
                   <View className={`px-3 py-1.5 rounded-full border ${badge.view}`}>
                     {isCompleting ? (
                       <ActivityIndicator size="small" color="#F59E0B" />

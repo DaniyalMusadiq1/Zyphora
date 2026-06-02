@@ -28,7 +28,7 @@ Route::middleware([
     'device.restrict',
     'fraud.check',
 ])->group(function () {
-    Route::get('/score', [ScoreController::class, 'show']);
+    Route::get('user/score', [ScoreController::class, 'show']);
     Route::get('/streak', [StreakController::class, 'show']);
     Route::post('/streak/checkin', [StreakController::class, 'checkin']);
 

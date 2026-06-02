@@ -8,7 +8,7 @@ import { fetchReferrals, shareReferral } from "../redux/slices/referralSlice";
 
 export default function FriendsScreen({ navigation }) {
   const dispatch = useDispatch();
-  const { referrals, referralCode, totalEarned, loading, error } = useSelector((state) => state.referral);
+  const { referrals=[], referralCode, totalEarned, loading, error } = useSelector((state) => state.referral);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
