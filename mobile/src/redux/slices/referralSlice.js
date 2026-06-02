@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../api'; // Ensure this path matches your api utility
+import api from '../api';
 
 // Async Thunks
 export const fetchReferrals = createAsyncThunk(
   'referrals/fetchReferrals',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
       const response = await api.get('/referrals');
       return response.data.data || response.data;
@@ -32,6 +32,7 @@ const initialState = {
   loading: false,
   error: null,
   totalEarnings: 0,
+  totalCount: 0,
 };
 
 const referralSlice = createSlice({
@@ -42,6 +43,13 @@ const referralSlice = createSlice({
       state.code = action.payload;
     },
     clearReferralError: (state) => {
+      state.error = null;
+    },
+    resetReferrals: (state) => {
+      state.list = [];
+      state.code = null;
+      state.totalEarnings = 0;
+      state.totalCount = 0;
       state.error = null;
     },
   },
@@ -55,6 +63,7 @@ const referralSlice = createSlice({
         state.loading = false;
         state.list = action.payload.data || [];
         state.totalEarnings = action.payload.total_earnings || 0;
+        state.totalCount = action.payload.total_count || state.list.length;
       })
       .addCase(fetchReferrals.rejected, (state, action) => {
         state.loading = false;
@@ -69,5 +78,5 @@ const referralSlice = createSlice({
   },
 });
 
-export const { setReferralCode, clearReferralError } = referralSlice.actions;
+export const { setReferralCode, clearReferralError, resetReferrals } = referralSlice.actions;
 export default referralSlice.reducer;

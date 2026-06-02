@@ -1,47 +1,474 @@
-```
-# Compiled and build artifacts
-*.pyc
-__pycache__/
-*.o
-*.obj
-
 # Dependencies
-vendor/
 node_modules/
-composer.lock
 
-# Logs and temp files
+# Compiled JavaScript
+*.js.map
+*.min.js
+*.bundle.js
+
+# Logs
 *.log
-*.tmp
-*.swp
 
-# Environment
+# Environment variables
 .env
 .env.local
-.env.*
+*.env.*
 
-# Editors
+# IDE files
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# Laravel/Lumen specific
-bootstrap/cache/
-storage/logs/
-storage/framework/cache/
-storage/framework/sessions/
-storage/framework/views/
-public/storage/
-
-# PHP specific
-.php_cs.cache
-.phpunit.result.cache
-
-# Coverage
+# Build outputs
+dist/
+build/
 coverage/
-htmlcov/
-.coverage
+target/
+
+# Python related (if applicable)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
 
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Compression files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# MyPy cache
+.mypy_cache/
+
+# PyTest cache
+.pytest_cache/
+
+# Gradle
+.gradle/
+
+# Android/iOS build files (for mobile projects)
+android/build/
+ios/build/
+*.apk
+*.aab
+*.ipa
+
+# React Native specific
+metro.config.js
+*.jks
+*.keystore
+
+# Redux store (to prevent accidental commit of sensitive data)
+redux/store/*.json
+
+# Sensitive config files
+config/local.*
+config/secrets.*
+
+# Lock files
+package-lock.json
+yarn.lock
+Pipfile.lock
+poetry.lock
+Gemfile.lock
+
+# IDE specific
+.vs/
+.settings/
+.project
+.classpath
+*.launch
+.cproject
+.metadata
+
+# Testing
+coverage.xml
+*.gcov
+*.lcov
+
+# Documentation builds
+_site/
+_sass-cache/
+.jekyll-metadata
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache directories
+.cache/
+.nyc_output/
+coverage/
+
+# Distribution / packaging
+*.egg-info/
+.eggs/
+.installed.cfg
+lib/
+lib64/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask
+instance/
+.webassets-cache
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Docker
+.dockerenv
+
+# Vagrant
+.vagrant/
+
+# Electron compilation artifacts
+release/
+out/
+
+# Phoenix
+deps/
+_*
+!_build/
+!_checkouts/
+priv/static/
+*.ez
+
+# C/C++
+*.o
+*.obj
+*.so
+*.a
+*.dylib
+*.dll
+*.exe
+*.out
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+
+# Go
+*.exe
+*.test
+*.prof
+*.syso
+
+# Rust
+target/
+Cargo.lock
+
+# Ruby
+*.gem
+*.rbc
+.bundle/
+.rbenv-gemsets/
+.rbenv-vars/
+.sass-cache/
+guard-artifacts/
+.rspec_parallel/
+.bundle/
+vendor/bundle/
+vendor/cache/
+vendor/gems/
+vendor/ruby/
+
+# Scala
+.classpath
+.project
+.scala_dependencies
+.worksheet
+
+# Erlang/Elixir
+.erlang.cookie
+.rebar
+.rebar3
+ebin/
+logs/
+
+# Haskell
+dist-newstyle/
+cabal.project.local
+cabal.project.local~
+dist/
+setup-config
+*.o
+*.hi
+*.chi
+*.chs.h
+*.dyn_o
+*.dyn_hi
+
+# Nim
+*.nim.cfg
+*.nimble
+nimcache/
+
+# Perl
+*.bs
+blib/
+blibdirs/
+*.dir
+*.ix
+*.al
+*.fas
+._*
+pm_to_blib
+*.swp
+*.swo
+t/cover_db/
+cover_db/
+
+# Objective-C
+*.gch
+*.pch
+*.xcodeproj/
+*.xcworkspace/
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.perspectivev3
+*.xcuserstate
+*.xccheckout
+
+# Swift
+*.xcodeproj/
+*.xcworkspace/
+*.swiftpm/
+DerivedData/
+*.log
+
+# Unity
+Library/
+Temp/
+Obj/
+Build/
+Logs/
+*.pidb.meta
+*.pdb.meta
+*.meta
+*.unityproj.meta
+*.sln.meta
+*.userprefs.meta
+*.booproj.meta
+*.csproj.meta
+*.user.meta
+*.userprefs
+*.pidb
+*.pdb
+*.unity
+*.unitypackage
+Build/
+LameDLL/*
+UnityGenerated/
+csc.rsp
+.mbp
+.sln
+.csproj
+.user
+.userprefs
+
+# Unreal Engine
+Binaries/
+Build/
+Saved/
+Intermediate/
+*. uproject
+*.uprojectdirs
+*.Config
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.opensdf
+*.sdf
+*.suo
+*.layout.cb
+*.VC.db
+*.VC.VC.opendb
+*.ipch
+*.iws
+*.iml
+*.iws
+*.idea
+*.tlog
+*.log
+*.VC.VC.opendb
+*.VC.db
+*.opensdf
+*.sdf
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opend......
+```javascript
+// Mobile-specific ignores
+android/build/
+ios/build/
+*.apk
+*.aab
+*.ipa
+
+// React Native specific
+metro.config.js
+*.jks
+*.keystore
+
+// Redux store (to prevent accidental commit of sensitive data)
+redux/store/*.json
+
+// Sensitive config files
+config/local.*
+config/secrets.*
+
+// Lock files
+package-lock.json
+yarn.lock
+
+// Distribution / packaging
+*.egg-info/
+.eggs/
+.installed.cfg
+lib/
+lib64/
+
+// Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.cover/
+
+// Cache directories
+.cache/
+.nyc_output/
+coverage/
+
+// Distribution / packaging
+*.egg-info/
+.eggs/
+.installed.cfg
+lib/
+lib64/
+
+// Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.cover/
+
+// Cache directories
+.cache/
+.nyc_output/
+coverage/
 ```

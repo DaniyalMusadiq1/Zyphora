@@ -1,11 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../api';
 
-
 // Async Thunks
 export const fetchScore = createAsyncThunk(
   'score/fetchScore',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
       const response = await api.get('/user/score');
       return response.data.data || response.data;
@@ -49,6 +48,13 @@ const scoreSlice = createSlice({
     clearScoreError: (state) => {
       state.error = null;
     },
+    resetScore: (state) => {
+      state.current = 0;
+      state.momentum = 1.0;
+      state.rank = 0;
+      state.nextRankThreshold = 1000;
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -74,7 +80,8 @@ const scoreSlice = createSlice({
 export const { 
   incrementScore, 
   resetMomentum, 
-  clearScoreError 
+  clearScoreError,
+  resetScore,
 } = scoreSlice.actions;
 
 export default scoreSlice.reducer;
