@@ -33,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->authGuard('admin')
             ->authPasswordBroker('admins')
             ->brandName('Zyphora Admin')
-            ->brandLogo(fn () => view('filament.brand-logo'))
+            // ->brandLogo(fn () => view('filament.brand-logo'))
             ->favicon(asset('favicon.ico'))
             ->colors([
                 'primary' => Color::hex('#6C63FF'),

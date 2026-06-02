@@ -4,7 +4,7 @@ import Svg, { Path, Rect, Circle, Check } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from '../components/SharedComponents';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchKycStatus, submitKycDocuments } from '../store/slices/kycSlice';
+import { fetchKycStatus, submitKycDocuments } from '../redux/slices/kycSlice';
 
 export default function KycScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();

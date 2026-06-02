@@ -7,7 +7,7 @@ import { Platform } from 'react-native';
 // If the app fails to connect, find your PC's IPv4 (e.g. 192.168.1.5)
 // and paste it below.
 // Leave it as null if you want the app to try to find it automatically.
-const MANUAL_IP_URL = 'http://192.168.100.84:8000/api'; 
+const MANUAL_IP_URL = 'http://192.168.18.17:8000/api'; 
 // 
 // Example: const MANUAL_IP_URL = 'http://192.168.1.5:8000/api';
 

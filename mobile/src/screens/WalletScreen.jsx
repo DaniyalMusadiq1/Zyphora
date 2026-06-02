@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Alert } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { Ionicons } from '@expo/vector-icons';
-import { fetchScore } from "../store/slices/scoreSlice";
-import { fetchKycStatus } from "../store/slices/kycSlice";
+
+import { fetchKycStatus } from "../redux/slices/kycSlice";
+import { fetchScore } from "../redux/slices/scoreSlice";
 
 export default function WalletScreen({ navigation }) {
   const dispatch = useDispatch();

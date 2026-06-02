@@ -1,114 +1,150 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../api';
 
+// Async Thunks
+
+/**
+ * Fetches the current user's KYC status and details
+ */
 export const fetchKycStatus = createAsyncThunk(
   'kyc/fetchStatus',
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await api.get('/kyc/status');
-      return data.data;
+      const response = await api.get('/kyc/status');
+      return response.data.data || response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch KYC status');
     }
   }
 );
 
-export const initiateKyc = createAsyncThunk(
-  'kyc/initiate',
-  async (tierRequested, { rejectWithValue }) => {
-    try {
-      const { data } = await api.post('/kyc/initiate', { tier_requested: tierRequested });
-      return data.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to initiate KYC');
-    }
-  }
-);
-
+/**
+ * Submits KYC documents (Front, Back, Selfie)
+ * Handles multipart/form-data automatically via FormData
+ */
 export const submitKycDocuments = createAsyncThunk(
-  'kyc/submit',
-  async (payload, { rejectWithValue }) => {
+  'kyc/submitDocuments',
+  async ({ documentType, frontImage, backImage, selfieImage }, { rejectWithValue }) => {
     try {
-      const { data } = await api.post('/kyc/submit', payload);
-      return data.data;
+      const formData = new FormData();
+      
+      // Append text data
+      formData.append('document_type', documentType);
+      
+      // Append images with proper filename and type for backend processing
+      if (frontImage) {
+        formData.append('document_front', {
+          uri: frontImage.uri || frontImage,
+          name: frontImage.fileName || 'front.jpg',
+          type: frontImage.mime || 'image/jpeg',
+        });
+      }
+      
+      if (backImage) {
+        formData.append('document_back', {
+          uri: backImage.uri || backImage,
+          name: backImage.fileName || 'back.jpg',
+          type: backImage.mime || 'image/jpeg',
+        });
+      }
+
+      if (selfieImage) {
+        formData.append('selfie', {
+          uri: selfieImage.uri || selfieImage,
+          name: selfieImage.fileName || 'selfie.jpg',
+          type: selfieImage.mime || 'image/jpeg',
+        });
+      }
+
+      const response = await api.post('/kyc/submit', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      return response.data.data || response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to submit documents');
+      console.error('KYC Upload Error:', error);
+      return rejectWithValue(error.response?.data?.message || 'Failed to upload documents');
     }
   }
 );
 
 const initialState = {
-  kycData: null,
+  status: 'not_started', // not_started, pending, verified, rejected
+  tier: 0,
+  rejectionReason: null,
+  submittedAt: null,
+  reviewedAt: null,
   loading: false,
+  uploading: false,
   error: null,
-  verificationId: null,
+  progress: 0, // For upload progress if implemented
 };
 
 const kycSlice = createSlice({
   name: 'kyc',
   initialState,
   reducers: {
+    resetKycState: (state) => {
+      state.status = 'not_started';
+      state.tier = 0;
+      state.rejectionReason = null;
+      state.error = null;
+    },
     clearKycError: (state) => {
       state.error = null;
     },
-    resetKyc: (state) => {
-      state.kycData = null;
-      state.error = null;
-      state.verificationId = null;
+    // Optimistic update if needed
+    setLocalStatus: (state, action) => {
+      state.status = action.payload;
     },
   },
   extraReducers: (builder) => {
     builder
-      // Fetch KYC Status
+      // Fetch Status
       .addCase(fetchKycStatus.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchKycStatus.fulfilled, (state, action) => {
         state.loading = false;
-        state.kycData = action.payload;
+        state.status = action.payload.status || 'not_started';
+        state.tier = action.payload.tier || 0;
+        state.rejectionReason = action.payload.rejection_reason || null;
+        state.submittedAt = action.payload.submitted_at || null;
+        state.reviewedAt = action.payload.reviewed_at || null;
       })
       .addCase(fetchKycStatus.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      // Initiate KYC
-      .addCase(initiateKyc.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(initiateKyc.fulfilled, (state, action) => {
-        state.loading = false;
-        state.verificationId = action.payload.verification_id;
-        state.kycData = {
-          ...state.kycData,
-          ...action.payload,
-          status: 'pending',
-        };
-      })
-      .addCase(initiateKyc.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
+      
       // Submit Documents
       .addCase(submitKycDocuments.pending, (state) => {
-        state.loading = true;
+        state.uploading = true;
         state.error = null;
+        state.progress = 0;
       })
       .addCase(submitKycDocuments.fulfilled, (state, action) => {
-        state.loading = false;
-        state.kycData = {
-          ...state.kycData,
-          ...action.payload,
-          status: 'reviewing',
-        };
+        state.uploading = false;
+        state.status = 'pending'; // Automatically set to pending after upload
+        state.submittedAt = new Date().toISOString();
+        state.rejectionReason = null;
+        state.progress = 100;
       })
       .addCase(submitKycDocuments.rejected, (state, action) => {
-        state.loading = false;
+        state.uploading = false;
         state.error = action.payload;
+        state.progress = 0;
       });
   },
 });
 
-export const { clearKycError, resetKyc } = kycSlice.actions;
+export const { 
+  resetKycState, 
+  clearKycError, 
+  setLocalStatus 
+} = kycSlice.actions;
+
 export default kycSlice.reducer;

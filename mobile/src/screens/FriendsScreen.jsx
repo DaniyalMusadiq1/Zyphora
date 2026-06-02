@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Alert } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { Ionicons } from '@expo/vector-icons';
-import { fetchReferrals, shareReferral } from "../store/slices/referralSlice";
+
 import * as Clipboard from 'expo-clipboard';
+import { fetchReferrals, shareReferral } from "../redux/slices/referralSlice";
 
 export default function FriendsScreen({ navigation }) {
   const dispatch = useDispatch();

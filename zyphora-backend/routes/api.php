@@ -10,12 +10,12 @@ use App\Http\Controllers\Api\ScoreController;
 use App\Http\Controllers\Api\TaskController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('auth')->middleware(['throttle:5,1'])->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
+// Route::prefix('auth')->middleware(['throttle:5,1'])->group(function () {
+    Route::post('auth/register', [AuthController::class, 'register']);
     Route::post('/otp', [AuthController::class, 'requestOtp']);
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/login-email', [AuthController::class, 'loginEmail']);
-});
+// });
 
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
