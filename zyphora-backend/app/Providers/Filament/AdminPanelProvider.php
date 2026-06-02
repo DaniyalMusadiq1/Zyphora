@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Widgets\MetricsDashboard;
 use App\Filament\Widgets\ReferralNetworkWidget;
+use App\Filament\Widgets\KycPendingWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -31,8 +32,14 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->authGuard('admin')
             ->authPasswordBroker('admins')
+            ->brandName('Zyphora Admin')
+            ->brandLogo(fn () => view('filament.brand-logo'))
+            ->favicon(asset('favicon.ico'))
             ->colors([
                 'primary' => Color::hex('#6C63FF'),
+                'success' => Color::hex('#10B981'),
+                'warning' => Color::hex('#F59E0B'),
+                'danger' => Color::hex('#EF4444'),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
@@ -43,6 +50,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 AccountWidget::class,
                 MetricsDashboard::class,
+                KycPendingWidget::class,
                 ReferralNetworkWidget::class,
             ])
             ->middleware([
@@ -58,6 +66,17 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+            ])
+            ->navigationGroups([
+                'User Management' => [
+                    'icon' => 'heroicon-o-users',
+                ],
+                'KYC & Compliance' => [
+                    'icon' => 'heroicon-o-shield-check',
+                ],
+                'Analytics' => [
+                    'icon' => 'heroicon-o-chart-bar',
+                ],
             ]);
     }
 }
