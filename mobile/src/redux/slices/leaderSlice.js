@@ -4,9 +4,9 @@ import api from '../api';
 // Async Thunks
 export const fetchLeaderboard = createAsyncThunk(
   'leader/fetchLeaderboard',
-  async (params = {}, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/leaderboard', { params });
+      const response = await api.get('/leaderboard');
       return response.data.data || response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch leaderboard');
@@ -15,21 +15,22 @@ export const fetchLeaderboard = createAsyncThunk(
 );
 
 const initialState = {
-  rows: [],
+  entries: [],
+  userRank: null,
   loading: false,
   error: null,
-  lastFetched: null,
 };
 
 const leaderSlice = createSlice({
   name: 'leader',
   initialState,
   reducers: {
-    clearLeaderError: (state) => {
+    clearError: (state) => {
       state.error = null;
     },
     resetLeaderboard: (state) => {
-      state.rows = [];
+      state.entries = [];
+      state.userRank = null;
       state.error = null;
     },
   },
@@ -41,8 +42,8 @@ const leaderSlice = createSlice({
       })
       .addCase(fetchLeaderboard.fulfilled, (state, action) => {
         state.loading = false;
-        state.rows = action.payload.rows || action.payload || [];
-        state.lastFetched = new Date();
+        state.entries = action.payload.entries || action.payload.leaderboard || [];
+        state.userRank = action.payload.user_rank || action.payload.userRank || null;
       })
       .addCase(fetchLeaderboard.rejected, (state, action) => {
         state.loading = false;
@@ -51,5 +52,5 @@ const leaderSlice = createSlice({
   },
 });
 
-export const { clearLeaderError, resetLeaderboard } = leaderSlice.actions;
+export const { clearError, resetLeaderboard } = leaderSlice.actions;
 export default leaderSlice.reducer;
