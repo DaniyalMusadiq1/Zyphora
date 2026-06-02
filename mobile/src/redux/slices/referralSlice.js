@@ -3,11 +3,11 @@ import api from '../api';
 
 // Async Thunks
 export const fetchReferrals = createAsyncThunk(
-  'referrals/fetchReferrals',
-  async (_, { rejectWithValue, getState }) => {
+  'referral/fetchReferrals',
+  async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/referrals');
-      return response.data.data || response.data;
+      const response = await api.get('/referral/list');
+      return response.data.referrals || response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch referrals');
     }
@@ -15,68 +15,83 @@ export const fetchReferrals = createAsyncThunk(
 );
 
 export const shareReferral = createAsyncThunk(
-  'referrals/shareReferral',
-  async ({ code }, { rejectWithValue }) => {
+  'referral/shareReferral',
+  async (_, { rejectWithValue, getState }) => {
     try {
-      // Logic for sharing (usually client-side clipboard, but can track analytics here)
-      return { success: true, code };
+      const state = getState();
+      const referralCode = state.auth.referralCode;
+      
+      // In a real app, this would use the native share API
+      const shareUrl = `https://zyphora.app/r/${referralCode}`;
+      
+      // Simulate sharing - in production use expo-sharing or similar
+      console.log('Sharing referral:', shareUrl);
+      
+      return { success: true, url: shareUrl };
     } catch (error) {
-      return rejectWithValue('Failed to share referral');
+      return rejectWithValue(error.message || 'Failed to share referral');
     }
   }
 );
 
 const initialState = {
-  list: [],
-  code: null,
+  referrals: [],
+  referralCode: null,
+  totalEarned: 0,
+  totalCount: 0,
   loading: false,
   error: null,
-  totalEarnings: 0,
-  totalCount: 0,
 };
 
 const referralSlice = createSlice({
-  name: 'referrals',
+  name: 'referral',
   initialState,
   reducers: {
     setReferralCode: (state, action) => {
-      state.code = action.payload;
+      state.referralCode = action.payload;
     },
-    clearReferralError: (state) => {
+    clearError: (state) => {
       state.error = null;
     },
     resetReferrals: (state) => {
-      state.list = [];
-      state.code = null;
-      state.totalEarnings = 0;
+      state.referrals = [];
+      state.referralCode = null;
+      state.totalEarned = 0;
       state.totalCount = 0;
       state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
+      // Fetch Referrals
       .addCase(fetchReferrals.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchReferrals.fulfilled, (state, action) => {
         state.loading = false;
-        state.list = action.payload.data || [];
-        state.totalEarnings = action.payload.total_earnings || 0;
-        state.totalCount = action.payload.total_count || state.list.length;
+        state.referrals = action.payload || [];
+        state.totalCount = action.payload?.length || 0;
+        state.totalEarned = action.payload?.reduce((sum, r) => sum + (r.points_earned || 0), 0) || 0;
       })
       .addCase(fetchReferrals.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
+      // Share Referral
       .addCase(shareReferral.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(shareReferral.fulfilled, (state) => {
         state.loading = false;
+      })
+      .addCase(shareReferral.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
 
-export const { setReferralCode, clearReferralError, resetReferrals } = referralSlice.actions;
+export const { setReferralCode, clearError, resetReferrals } = referralSlice.actions;
 export default referralSlice.reducer;
