@@ -4,10 +4,10 @@ import api from '../api';
 // Async Thunks
 export const fetchTasks = createAsyncThunk(
   'task/fetchTasks',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
       const response = await api.get('/mine/tasks');
-      return response.data.data || response.data;
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch tasks');
     }
@@ -16,10 +16,10 @@ export const fetchTasks = createAsyncThunk(
 
 export const completeTask = createAsyncThunk(
   'task/completeTask',
-  async (taskId, { rejectWithValue }) => {
+  async (taskId, { rejectWithValue, getState }) => {
     try {
       const response = await api.post(`/mine/tasks/${taskId}/complete`);
-      return { taskId, data: response.data.data || response.data };
+      return { taskId, data: response.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to complete task');
     }
@@ -60,10 +60,14 @@ const taskSlice = createSlice({
       })
       .addCase(fetchTasks.fulfilled, (state, action) => {
         state.loading = false;
-        state.tasks = action.payload.tasks || [];
-        state.totalTasks = action.payload.total_tasks || 0;
-        state.completedCount = action.payload.completed_count || 0;
-        state.pendingCount = action.payload.pending_count || 0;
+        // Backend returns: { success: true, data: { tasks: [...], total_tasks, completed_count, pending_count } }
+        const tasksData = action.payload.data || action.payload.data?.data;
+        if (tasksData) {
+          state.tasks = tasksData.tasks || [];
+          state.totalTasks = tasksData.total_tasks || 0;
+          state.completedCount = tasksData.completed_count || 0;
+          state.pendingCount = tasksData.pending_count || 0;
+        }
       })
       .addCase(fetchTasks.rejected, (state, action) => {
         state.loading = false;
@@ -76,13 +80,17 @@ const taskSlice = createSlice({
       })
       .addCase(completeTask.fulfilled, (state, action) => {
         state.completingId = null;
+        // Backend returns: { success: true, message: '...', data: { task_id, task_title, points_earned, new_score, status } }
         const { taskId, data } = action.payload;
+        const completionData = data.data || data;
+        
         const taskIndex = state.tasks.findIndex(t => t.id === taskId);
         if (taskIndex !== -1) {
           state.tasks[taskIndex] = {
             ...state.tasks[taskIndex],
             is_completed: true,
-            status: data.status || 'verified',
+            status: completionData.status || 'verified',
+            pointsEarned: completionData.points_earned || 0,
           };
         }
         state.completedCount += 1;

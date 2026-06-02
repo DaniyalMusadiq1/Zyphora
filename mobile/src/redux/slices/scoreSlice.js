@@ -4,10 +4,10 @@ import api from '../api';
 // Async Thunks
 export const fetchScore = createAsyncThunk(
   'score/fetchScore',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
       const response = await api.get('/score');
-      return response.data.score || response.data;
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch score');
     }
@@ -46,7 +46,21 @@ const scoreSlice = createSlice({
       })
       .addCase(fetchScore.fulfilled, (state, action) => {
         state.loading = false;
-        state.snapshot = action.payload;
+        // Backend returns: { score: { user_id, total_pts, ps_total, momentum_m, ... } }
+        const scoreData = action.payload.score || action.payload.data?.score;
+        if (scoreData) {
+          state.snapshot = {
+            userId: scoreData.user_id,
+            totalPoints: scoreData.total_pts || 0,
+            psTotal: scoreData.ps_total || 0,
+            momentum: scoreData.momentum_m || 0,
+            depthScore: scoreData.depth_score_d || 0,
+            basePoints: scoreData.base_pts || 0,
+            boostPoints: scoreData.boost_pts || 0,
+            fraudMultiplier: scoreData.fraud_multiplier ?? 1,
+            lastComputed: scoreData.last_computed_at,
+          };
+        }
         state.lastUpdated = new Date().toISOString();
       })
       .addCase(fetchScore.rejected, (state, action) => {

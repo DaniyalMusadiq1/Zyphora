@@ -4,10 +4,10 @@ import api from '../api';
 // Async Thunks
 export const fetchStreak = createAsyncThunk(
   'streak/fetchStreak',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
       const response = await api.get('/streak');
-      return response.data.data || response.data;
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch streak');
     }
@@ -16,10 +16,10 @@ export const fetchStreak = createAsyncThunk(
 
 export const claimStreak = createAsyncThunk(
   'streak/claimStreak',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
       const response = await api.post('/streak/checkin');
-      return response.data.data || response.data;
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to claim streak');
     }
@@ -30,6 +30,8 @@ const initialState = {
   data: null,
   currentStreak: 0,
   longestStreak: 0,
+  shieldsBanked: 0,
+  lastActiveDate: null,
   lastClaimedAt: null,
   nextClaimAt: null,
   loading: false,
@@ -54,6 +56,7 @@ const streakSlice = createSlice({
       state.data = null;
       state.currentStreak = 0;
       state.longestStreak = 0;
+      state.shieldsBanked = 0;
       state.error = null;
     },
   },
@@ -66,11 +69,16 @@ const streakSlice = createSlice({
       })
       .addCase(fetchStreak.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;
-        state.currentStreak = action.payload.current_streak || 0;
-        state.longestStreak = action.payload.best_streak || 0;
-        state.lastClaimedAt = action.payload.last_claimed_at || null;
-        state.nextClaimAt = action.payload.next_claim_at || null;
+        // Backend returns: { success: true, data: { current_streak, best_streak, shields_banked, ... } }
+        const streakData = action.payload.data || action.payload.data?.data;
+        if (streakData) {
+          state.data = streakData;
+          state.currentStreak = streakData.current_streak || 0;
+          state.longestStreak = streakData.best_streak || 0;
+          state.shieldsBanked = streakData.shields_banked || 0;
+          state.lastActiveDate = streakData.last_active_date;
+          state.streakBrokenAt = streakData.streak_broken_at;
+        }
       })
       .addCase(fetchStreak.rejected, (state, action) => {
         state.loading = false;
@@ -83,9 +91,15 @@ const streakSlice = createSlice({
       })
       .addCase(claimStreak.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;
-        state.currentStreak = action.payload.current_streak || state.currentStreak;
-        state.lastClaimedAt = new Date().toISOString();
+        // Backend returns: { success: true, message: '...', data: { current_streak, best_streak, points_earned, ... } }
+        const claimData = action.payload.data || action.payload.data?.data;
+        if (claimData) {
+          state.data = claimData;
+          state.currentStreak = claimData.current_streak || state.currentStreak;
+          state.longestStreak = claimData.best_streak || state.longestStreak;
+          state.pointsEarned = claimData.points_earned || 0;
+          state.lastClaimedAt = new Date().toISOString();
+        }
       })
       .addCase(claimStreak.rejected, (state, action) => {
         state.loading = false;

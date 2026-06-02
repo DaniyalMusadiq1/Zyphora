@@ -4,10 +4,10 @@ import api from '../api';
 // Async Thunks
 export const fetchLeaderboard = createAsyncThunk(
   'leader/fetchLeaderboard',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
       const response = await api.get('/leaderboard');
-      return response.data.data || response.data;
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch leaderboard');
     }
@@ -42,8 +42,20 @@ const leaderSlice = createSlice({
       })
       .addCase(fetchLeaderboard.fulfilled, (state, action) => {
         state.loading = false;
-        state.entries = action.payload.entries || action.payload.leaderboard || [];
-        state.userRank = action.payload.user_rank || action.payload.userRank || null;
+        // Backend returns: { leaderboard: [{user_id, name, ps_total}, ...] }
+        const leaderboardData = action.payload.leaderboard || action.payload.data?.leaderboard || [];
+        state.entries = leaderboardData.map((entry, index) => ({
+          rank: index + 1,
+          userId: entry.user_id,
+          name: entry.name || 'Miner',
+          score: entry.ps_total || 0,
+        }));
+        // Calculate user rank if current user is in leaderboard
+        const authState = getState().auth;
+        const userEntry = leaderboardData.find(e => e.user_id === authState.userId);
+        if (userEntry) {
+          state.userRank = leaderboardData.indexOf(userEntry) + 1;
+        }
       })
       .addCase(fetchLeaderboard.rejected, (state, action) => {
         state.loading = false;
