@@ -4,12 +4,24 @@ import api from '../api';
 // Async Thunks
 export const fetchReferrals = createAsyncThunk(
   'referral/fetchReferrals',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
       const response = await api.get('/referral/list');
-      return response.data.referrals || response.data;
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch referrals');
+    }
+  }
+);
+
+export const generateReferralCode = createAsyncThunk(
+  'referral/generateReferralCode',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/referral/generate');
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to generate referral code');
     }
   }
 );
@@ -37,6 +49,7 @@ export const shareReferral = createAsyncThunk(
 const initialState = {
   referrals: [],
   referralCode: null,
+  shareUrl: null,
   totalEarned: 0,
   totalCount: 0,
   loading: false,
@@ -56,6 +69,7 @@ const referralSlice = createSlice({
     resetReferrals: (state) => {
       state.referrals = [];
       state.referralCode = null;
+      state.shareUrl = null;
       state.totalEarned = 0;
       state.totalCount = 0;
       state.error = null;
@@ -70,11 +84,35 @@ const referralSlice = createSlice({
       })
       .addCase(fetchReferrals.fulfilled, (state, action) => {
         state.loading = false;
-        state.referrals = action.payload || [];
-        state.totalCount = action.payload?.length || 0;
-        state.totalEarned = action.payload?.reduce((sum, r) => sum + (r.points_earned || 0), 0) || 0;
+        // Backend returns: { referrals: [...] }
+        const referralsData = action.payload.referrals || action.payload.data?.referrals || [];
+        state.referrals = referralsData.map(r => ({
+          id: r.id,
+          refereeId: r.referee_id,
+          refereeName: r.referee?.name || 'Unknown',
+          refereeScore: r.referee?.depth_score_d || 0,
+          qualityScore: r.quality_score || 0,
+          gammaPenalty: r.gamma_penalty || 1,
+          joinedAt: r.created_at,
+        }));
+        state.totalCount = state.referrals.length;
+        state.totalEarned = state.referrals.reduce((sum, r) => sum + (r.qualityScore || 0), 0);
       })
       .addCase(fetchReferrals.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Generate Referral Code
+      .addCase(generateReferralCode.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(generateReferralCode.fulfilled, (state, action) => {
+        state.loading = false;
+        state.referralCode = action.payload.referral_code;
+        state.shareUrl = action.payload.share_url;
+      })
+      .addCase(generateReferralCode.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
