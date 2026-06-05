@@ -2,9 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Widgets\MetricsDashboard;
-use App\Filament\Widgets\ReferralNetworkWidget;
-use App\Filament\Widgets\KycPendingWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -14,6 +11,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
+use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -26,32 +24,20 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
-            ->authGuard('admin')
-            ->authPasswordBroker('admins')
-            ->brandName('Zyphora Admin')
-            // ->brandLogo(fn () => view('filament.brand-logo'))
-            ->favicon(asset('favicon.ico'))
             ->colors([
-                'primary' => Color::hex('#6C63FF'),
-                'success' => Color::hex('#10B981'),
-                'warning' => Color::hex('#F59E0B'),
-                'danger' => Color::hex('#EF4444'),
+                'primary' => Color::Amber,
             ])
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
+            ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\Filament\Admin\Resources')
+            ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\Filament\Admin\Pages')
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\Filament\Admin\Widgets')
             ->widgets([
                 AccountWidget::class,
-                MetricsDashboard::class,
-                KycPendingWidget::class,
-                ReferralNetworkWidget::class,
+                FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -66,17 +52,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->navigationGroups([
-                'User Management' => [
-                    'icon' => 'heroicon-o-users',
-                ],
-                'KYC & Compliance' => [
-                    'icon' => 'heroicon-o-shield-check',
-                ],
-                'Analytics' => [
-                    'icon' => 'heroicon-o-chart-bar',
-                ],
             ]);
     }
 }
