@@ -1,28 +1,22 @@
-```php
-/vendor/
-/node_modules/
+```
+# Dependencies
+vendor/
+composer.lock
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Environment
 .env
 .env.local
 .env.*
-*.log
-*.tmp
-*.swp
+
+# Editors
+.vscode/
+.idea/
+
+# OS generated files
 .DS_Store
 Thumbs.db
-.idea/
-.vscode/
-coverage/
-htmlcov/
-.coverage
-__pycache__/
-*.pyc
-*.class
-*.o
-*.obj
-dist/
-build/
-target/
-.mypy_cache/
-.pytest_cache/
-.gradle/
 ```

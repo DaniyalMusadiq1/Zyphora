@@ -7,8 +7,6 @@ use App\Http\Middleware\VerifyApiSignature;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Support\Facades\RateLimiter;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -24,22 +22,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'app.session' => VerifyAppSessionToken::class,
             'device.restrict' => DeviceRestriction::class,
             'fraud.check' => FraudCheck::class,
+            'throttle:api' => \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            'throttle:auth' => \Illuminate\Routing\Middleware\ThrottleRequests::class.':auth',
+            'throttle:kyc' => \Illuminate\Routing\Middleware\ThrottleRequests::class.':kyc',
         ]);
 
         $middleware->prependToGroup('api', VerifyApiSignature::class);
-        
-        // Configure rate limiters
-        RateLimiter::for('auth', function ($request) {
-            return Limit::perMinute(5)->by($request->ip());
-        });
-        
-        RateLimiter::for('api', function ($request) {
-            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
-        });
-        
-        RateLimiter::for('kyc', function ($request) {
-            return Limit::perHour(10)->by($request->user()?->id ?: $request->ip());
-        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
