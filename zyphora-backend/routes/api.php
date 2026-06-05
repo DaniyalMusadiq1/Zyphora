@@ -11,14 +11,15 @@ use App\Http\Controllers\Api\StreakController;
 use App\Http\Controllers\Api\TaskController;
 use Illuminate\Support\Facades\Route;
 
-// Route::prefix('auth')->middleware(['throttle:5,1'])->group(function () {
+// Auth endpoints with rate limiting
+Route::middleware(['throttle:auth'])->group(function () {
     Route::post('auth/register', [AuthController::class, 'register']);
     Route::post('/otp', [AuthController::class, 'requestOtp']);
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/login-email', [AuthController::class, 'loginEmail']);
-// });
+});
 
-Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::patch('/auth/me', [AuthController::class, 'updateMe']);
 
@@ -30,7 +31,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 
 Route::middleware([
     'auth:sanctum',
-    'throttle:60,1',
+    'throttle:api',
     'device.restrict',
     'fraud.check',
 ])->group(function () {
@@ -46,10 +47,10 @@ Route::middleware([
     // Leaderboard
     Route::get('/leaderboard', [LeaderboardController::class, 'index']);
 
-    // KYC
-    Route::post('/kyc/initiate', [KycController::class, 'initiate']);
+    // KYC with rate limiting
+    Route::post('/kyc/initiate', [KycController::class, 'initiate'])->middleware('throttle:kyc');
     Route::get('/kyc/status', [KycController::class, 'status']);
-    Route::post('/kyc/submit', [KycController::class, 'submit']);
+    Route::post('/kyc/submit', [KycController::class, 'submit'])->middleware('throttle:kyc');
 
     // Governance
     Route::get('/governance/proposals', [GovernanceController::class, 'proposals']);

@@ -22,7 +22,10 @@ class ReferralController extends Controller
     {
         $refs = Referral::query()
             ->where('referrer_id', $request->user()->id)
-            ->with('referee:id,name,depth_score_d')
+            ->with(['referee' => function ($query) {
+                $query->select('id', 'name', 'depth_score_d', 'fraud_score', 'kyc_tier');
+            }])
+            ->orderByDesc('created_at')
             ->get();
 
         return response()->json(['referrals' => $refs]);

@@ -1,13 +1,52 @@
 ```
+# Laravel-specific ignores
+/vendor/
+/storage/logs/*
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/boostrap/cache/*
+
+# PHP-related
+*.php~
+*.php.bak
+*.swp
+
 # Dependencies
-node_modules/
+/node_modules/
+/composer.lock
+
+# Environment
+.env
+.env.local
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+storage/logs/*.log
 
 # Build artifacts
-dist/
-build/
-target/
+/dist/
+/build/
+/target/
+/coverage/
+/htmlcov/
+/.nyc_output
+/.grunt
+/.bower
 
-# Python
+# Python (if present)
 __pycache__/
 *.pyc
 *.pyo
@@ -16,39 +55,19 @@ __pycache__/
 env/
 venv/
 .venv/
-.ENV
-.ENV.local
-
-# Logs
-*.log
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*.tmp
-
-# Environment variables
-.env
-.env.local
-*.env.*
-
-# Coverage reports
-coverage/
-htmlcov/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
 .coverage
-
-# MyPy cache
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git/modules/
+*.bin
+.hypothesis/
 .mypy_cache/
 .pytest_cache/
 ```
