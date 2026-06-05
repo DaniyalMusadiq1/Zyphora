@@ -1,73 +1,28 @@
-```
-# Laravel-specific ignores
+```php
 /vendor/
-/storage/logs/*
-/storage/framework/cache/data/*
-/storage/framework/sessions/*
-/storage/framework/views/*
-/boostrap/cache/*
-
-# PHP-related
-*.php~
-*.php.bak
-*.swp
-
-# Dependencies
 /node_modules/
-/composer.lock
-
-# Environment
 .env
 .env.local
 .env.*
-!.env.example
-
-# IDE
-.vscode/
-.idea/
+*.log
+*.tmp
 *.swp
-*.swo
-
-# OS
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log
-storage/logs/*.log
-
-# Build artifacts
-/dist/
-/build/
-/target/
-/coverage/
-/htmlcov/
-/.nyc_output
-/.grunt
-/.bower
-
-# Python (if present)
+.idea/
+.vscode/
+coverage/
+htmlcov/
+.coverage
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git/modules/
-*.bin
-.hypothesis/
+*.class
+*.o
+*.obj
+dist/
+build/
+target/
 .mypy_cache/
 .pytest_cache/
+.gradle/
 ```

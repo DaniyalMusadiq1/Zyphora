@@ -129,6 +129,7 @@ class AuthController extends Controller
             'username'      => $user->name,
             'email'         => $user->email,
             'referral_code' => $user->referral_code,
+            'is_admin'      => $user->is_admin ?? false,
             'message'       => 'Registration successful.',
         ]);
     }
@@ -151,6 +152,11 @@ class AuthController extends Controller
             abort(403, 'Account suspended.');
         }
 
+        // Update last login info
+        $user->last_login_at = now();
+        $user->last_login_ip = $request->ip();
+        $user->save();
+
         // Device limit check is not applied for login (only registration)
         app(DeviceRegistryService::class)->attachUserDevice($user, $data['device_id'], $request);
 
@@ -160,7 +166,9 @@ class AuthController extends Controller
             'token'         => $token,
             'user_id'       => $user->id,
             'username'      => $user->name,
+            'email'         => $user->email,
             'referral_code' => $user->referral_code,
+            'is_admin'      => $user->is_admin ?? false,
         ]);
     }
 
@@ -207,6 +215,7 @@ class AuthController extends Controller
             'referral_code'  => $this->encodeReferrer($user->id),
             'joined_at'      => $user->joined_at,
             'is_banned'      => $user->is_banned,
+            'is_admin'       => $user->is_admin ?? false,
             'fraud_score'    => $user->fraud_score,
         ]);
     }
