@@ -9,6 +9,7 @@ const initialState = {
   phone: '',
   email: '',
   displayName: "ali",
+  isAdmin: false,
 };
 
 const authSlice = createSlice({
@@ -19,6 +20,7 @@ const authSlice = createSlice({
       state.token = action.payload.token ?? null;
       state.userId = action.payload.userId ?? null;
       state.referralCode = action.payload.referralCode ?? null;
+      state.isAdmin = action.payload.isAdmin ?? false;
     },
     setProfile(state, action) {
       const u = action.payload || {};
@@ -31,6 +33,7 @@ const authSlice = createSlice({
       const raw = u.name;
       state.displayName = raw != null && String(raw).trim() ? String(raw).trim() : '';
       state.email = u.email != null ? String(u.email) : '';
+      state.isAdmin = u.is_admin ?? false;
     },
     setDeviceId(state, action) {
       state.deviceId = action.payload;
@@ -44,6 +47,7 @@ const authSlice = createSlice({
       state.referralCode = null;
       state.displayName = '';
       state.email = '';
+      state.isAdmin = false;
     },
   },
 });
