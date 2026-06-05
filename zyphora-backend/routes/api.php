@@ -16,7 +16,7 @@ Route::middleware(['throttle:auth'])->group(function () {
     Route::post('auth/register', [AuthController::class, 'register']);
     Route::post('/otp', [AuthController::class, 'requestOtp']);
     Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/login-email', [AuthController::class, 'loginEmail']);
+    Route::post('auth/login-email', [AuthController::class, 'loginEmail']);
 });
 
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
