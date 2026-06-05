@@ -115,11 +115,26 @@ class KycController extends Controller
             $data = $request->validate([
                 'verification_id' => ['required', 'exists:kyc_verifications,id'],
                 'document_type' => ['nullable', 'string', 'in:passport,national_id,drivers_license'],
-                'document_front' => ['nullable', 'string'],
-                'document_back' => ['nullable', 'string'],
-                'selfie' => ['nullable', 'string'],
+                'document_front' => ['nullable', 'string', 'max:5000000'],
+                'document_back' => ['nullable', 'string', 'max:5000000'],
+                'selfie' => ['nullable', 'string', 'max:5000000'],
                 'liveness_check' => ['nullable', 'boolean'],
             ]);
+
+            // Validate document data format (base64 or URL)
+            foreach (['document_front', 'document_back', 'selfie'] as $field) {
+                if (!empty($data[$field])) {
+                    // Check if it's a valid base64 string or URL
+                    if (!filter_var($data[$field], FILTER_VALIDATE_URL)) {
+                        // If not a URL, validate base64 format
+                        if (!preg_match('/^[a-zA-Z0-9\/\+\=]+$/', $data[$field])) {
+                            throw ValidationException::withMessages([
+                                $field => ['Invalid format. Must be a valid URL or base64 encoded string.']
+                            ]);
+                        }
+                    }
+                }
+            }
 
             $verification = KycVerification::where('id', $data['verification_id'])
                 ->where('user_id', $user->id)

@@ -32,10 +32,25 @@ class AuthController extends Controller
         $normalized = preg_replace('/\D+/', '', $data['phone']);
         $phoneHash  = hash('sha256', $normalized);
 
+        // Rate limit check (manual throttle for OTP requests)
+        $rateLimitKey = 'otp_rate:' . $request->ip();
+        $attempts = Cache::get($rateLimitKey, 0);
+        
+        if ($attempts >= 5) {
+            throw ValidationException::withMessages([
+                'phone' => ['Too many OTP requests. Please try again later.']
+            ]);
+        }
+        
+        // Increment attempt counter with 1 hour expiry
+        Cache::put($rateLimitKey, $attempts + 1, now()->addHour());
+
         // Check if user already exists for this phone (optional: prevent spamming)
         // But typically we allow OTP request even if exists for Login flow
 
-        $otp = (string) random_int(100000, 999999);
+        // Generate cryptographically secure OTP using random_bytes
+        $otp = sprintf('%06d', hexdec(bin2hex(random_bytes(3))) % 1000000);
+
         Cache::put('otp:' . $phoneHash, $otp, now()->addMinutes(10));
 
         $payload = ['status' => 'sent', 'message' => 'OTP sent successfully'];
