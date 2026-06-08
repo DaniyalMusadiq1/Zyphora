@@ -71,7 +71,7 @@ class KycController extends Controller
                         'tier' => 0,
                         'kyc_tier' => (int) $user->kyc_tier,
                         'steps' => [
-                            ['label' => 'Mobile', 'done' => (bool) $user->phone_verified_at],
+                            ['label' => 'Mobile', 'done' => (bool) $user->phone_hash],
                             ['label' => 'Identity', 'done' => false],
                             ['label' => 'Liveness', 'done' => false],
                         ],
@@ -80,7 +80,7 @@ class KycController extends Controller
             }
 
             $steps = [
-                ['label' => 'Mobile', 'done' => (bool) $user->phone_verified_at],
+                ['label' => 'Mobile', 'done' => (bool) $user->phone_hash],
                 ['label' => 'Identity', 'done' => in_array($latestKyc->status, ['verified', 'approved'])],
                 ['label' => 'Liveness', 'done' => $latestKyc->status === 'verified' && (bool) $latestKyc->liveness_check],
             ];

@@ -15,13 +15,13 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['throttle:auth'])->group(function () {
     Route::post('auth/register', [AuthController::class, 'register']);
     Route::post('/otp', [AuthController::class, 'requestOtp']);
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'loginEmail']);
     Route::post('auth/login-email', [AuthController::class, 'loginEmail']);
 });
 
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
-    Route::patch('/auth/me', [AuthController::class, 'updateMe']);
+    // Note: updateMe endpoint removed - user updates handled via dedicated profile endpoints if needed
 
     // Score & Streak endpoints (lightweight, no fraud check needed)
     Route::get('/score', [ScoreController::class, 'show']);

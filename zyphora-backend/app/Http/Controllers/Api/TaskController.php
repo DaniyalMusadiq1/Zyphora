@@ -148,7 +148,7 @@ class TaskController extends Controller
                     'task_id' => $task->id,
                     'task_title' => $task->title,
                     'points_earned' => round((float) $task->weight_w * (float) $task->rarity_factor, 2),
-                    'new_score' => (float) ($freshScore?->total_pts ?? 0),
+                    'new_score' => (float) ($freshScore?->ps_total ?? 0),
                     'status' => $task->verification_type === 'auto' ? 'verified' : 'pending_verification',
                 ],
             ], 200);

@@ -10,9 +10,11 @@ class DeviceRegistryService
 {
     public function assertCanRegister(string $deviceId): void
     {
-        $count = DeviceRegistry::where('device_id', $deviceId)
-            ->distinct('user_id')
-            ->count('user_id');
+        $count = DeviceRegistry::query()
+            ->where('device_id', $deviceId)
+            ->select('user_id')
+            ->distinct()
+            ->count();
 
         if ($count >= 2) {
             throw ValidationException::withMessages([

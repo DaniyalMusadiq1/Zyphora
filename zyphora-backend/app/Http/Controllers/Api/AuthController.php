@@ -53,12 +53,9 @@ class AuthController extends Controller
 
         Cache::put('otp:' . $phoneHash, $otp, now()->addMinutes(10));
 
-        $payload = ['status' => 'sent', 'message' => 'OTP sent successfully'];
-        if (config('app.debug')) {
-            $payload['otp'] = $otp;
-        }
-
-        return response()->json($payload);
+        // TODO: Integrate SMS provider (Twilio, Vonage, etc.) to send OTP
+        // For now, only return success message - NEVER expose OTP in production
+        return response()->json(['status' => 'sent', 'message' => 'OTP sent successfully']);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -212,7 +209,7 @@ class AuthController extends Controller
             'name'           => $user->name,
             'email'          => $user->email,
             'phone'          => $user->phone_hash ? 'registered' : null,
-            'referral_code'  => $this->encodeReferrer($user->id),
+            'referral_code'  => $user->referral_code,
             'joined_at'      => $user->joined_at,
             'is_banned'      => $user->is_banned,
             'is_admin'       => $user->is_admin ?? false,

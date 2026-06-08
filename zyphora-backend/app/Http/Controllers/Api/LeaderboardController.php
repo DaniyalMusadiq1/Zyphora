@@ -18,9 +18,10 @@ class LeaderboardController extends Controller
         // Enforce reasonable limits
         $limit = min(max($limit, 1), 100);
 
-        $cacheKey = "leaderboard:top:{$page}:{$limit}";
+        // Use a single cache key for the top scores, then paginate in memory
+        $cacheKey = "leaderboard:top:100";
 
-        $result = Cache::remember($cacheKey, $ttl, function () use ($limit) {
+        $result = Cache::remember($cacheKey, $ttl, function () {
             return UserScore::query()
                 ->with(['user' => function ($query) {
                     $query->select('id', 'name', 'referral_code');

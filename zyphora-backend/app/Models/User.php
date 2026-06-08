@@ -102,4 +102,9 @@ class User extends Authenticatable
             ->withPivot('completed_at')
             ->withTimestamps();
     }
+
+    public function devices(): HasMany
+    {
+        return $this->hasMany(DeviceRegistry::class);
+    }
 }
