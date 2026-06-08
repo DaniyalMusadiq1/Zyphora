@@ -7,7 +7,6 @@ use App\Http\Middleware\VerifyApiSignature;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Support\Facades\RateLimiter; // Ensure this import is present
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -29,24 +28,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->prependToGroup('api', VerifyApiSignature::class);
-    })
-    ->withRateLimiting(function () { // Add this block back
-        RateLimiter::for('auth', function (object $request) {
-            return [
-                // Limit auth requests to 5 per minute per IP
-                \Illuminate\Cache\RateLimiting\Limit::perMinute(5)->by($request->ip()),
-                // Also limit by email if present
-                \Illuminate\Cache\RateLimiting\Limit::perMinute(3)->by($request->email ?? $request->ip()),
-            ];
-        });
-
-        RateLimiter::for('api', function (object $request) {
-            return \Illuminate\Cache\RateLimiting\Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
-        });
-
-        RateLimiter::for('kyc', function (object $request) {
-            return \Illuminate\Cache\RateLimiting\Limit::perHour(10)->by($request->user()?->id ?: $request->ip());
-        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
