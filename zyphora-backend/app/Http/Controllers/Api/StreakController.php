@@ -53,7 +53,7 @@ class StreakController extends Controller
                 // Award points for check-in
                 if ($streak->wasRecentlyCreated || $streak->current_streak > 1) {
                     $bonusPoints = min($streak->current_streak * 10, 500);
-                    $user->score()->firstOrCreate([])->increment('total_pts', $bonusPoints);
+                    $user->score()->firstOrCreate([])->increment('ps_total', $bonusPoints);
                 }
             });
 
