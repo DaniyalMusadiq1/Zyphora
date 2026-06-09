@@ -30,7 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToGroup('api', VerifyApiSignature::class);
         
         // Configure guest redirect for admin guard to use Filament's login page
-        $middleware->redirectGuestsUsing('admin', fn () => url('/admin/login'));
+        $middleware->redirectGuestsTo(fn () => url('/admin/login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
