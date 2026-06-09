@@ -154,7 +154,7 @@ function MainStackNav() {
   return (
     <MainStack.Navigator screenOptions={{ headerShown: false }}>
       <MainStack.Screen name="MainTabs" component={MainTabs} />
-      <MainStack.Screen name="KYC" component={KycScreen} />
+      <MainStack.Screen name="Kyc" component={KycScreen} />
     </MainStack.Navigator>
   );
 }

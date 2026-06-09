@@ -107,16 +107,7 @@ export default function HomeScreen({ setScreen }) {
           </TouchableOpacity>
         </View>
 
-        {/* Active Boosts */}
-        <View className="px-5 mb-1.5">
-          <Text className="text-[10px] font-semibold text-white/30 tracking-[0.1em] uppercase mb-2.5">Active Boosts</Text>
-          {boosts.map((b) => (
-            <View key={b.l} className="flex-row items-center justify-between py-[9px] border-b border-white/[0.08]">
-              <Text className={`text-[13px] ${b.dim ? "text-white/30" : "text-white/70"}`}>{b.l}</Text>
-              <Text className={`text-[13px] font-bold tabular-nums ${b.dim ? "text-white/30" : "text-white"}`}>{b.v}</Text>
-            </View>
-          ))}
-        </View>
+     
       </ScrollView>
       <BottomNav active="home" setScreen={setScreen} />
     </View>

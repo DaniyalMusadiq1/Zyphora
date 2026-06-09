@@ -332,20 +332,7 @@ export default function DashboardScreen() {
           <CatchupBanner />
         </View>
 
-        {/* Boosts list */}
-        <Text style={styles.sectionTitle}>TODAY'S BOOSTS</Text>
-        {[
-          { lbl: `Streak bonus (day ${streak})`, val: '+142%', active: streak > 0 },
-          { lbl: `Ads watched (${adsWatched}/${MAX_ADS_PER_DAY})`, val: `+${adsWatched * 10}%`, active: adsWatched > 0 },
-          { lbl: 'Quiz done', val: '+12%', active: false },
-          { lbl: 'KYC verified', val: '×1.0D', active: true },
-          { lbl: 'Premium task', val: '+0%', active: false },
-        ].map((b) => (
-          <View key={b.lbl} style={styles.boostRow}>
-            <Text style={[styles.boostLbl, !b.active && styles.boostDim]}>{b.lbl}</Text>
-            <Text style={[styles.boostVal, !b.active && styles.boostDim]}>{b.val}</Text>
-          </View>
-        ))}
+    
 
         <View style={{ height: 24 }} />
       </ScrollView>
