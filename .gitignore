@@ -12,7 +12,6 @@ __pycache__/
 *.out
 
 # Dependencies
-vendor/
 node_modules/
 venv/
 .venv/
@@ -24,16 +23,20 @@ venv/
 *.log
 *.tmp
 *.swp
+*.swo
 
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
 
 # System files
 .DS_Store
 Thumbs.db
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
 
 # Build directories
 dist/
@@ -41,12 +44,11 @@ build/
 target/
 .gradle/
 
-# Cache directories
+# Python specific
 .mypy_cache/
 .pytest_cache/
-coverage/
-htmlcov/
-.coverage
+*.pyc
+__pycache__/
 
 # Compressed files
 *.zip
