@@ -10,6 +10,11 @@ class VerifyApiSignature
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // Skip for admin panel and web routes
+        if ($request->is('admin*') || ! $request->is('api/*')) {
+            return $next($request);
+        }
+
         $secret = (string) config('zyphora.api_hmac_secret');
         if ($secret === '') {
             return $next($request);

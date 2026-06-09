@@ -10,7 +10,7 @@ use Illuminate\Notifications\Notifiable;
 
 class Admin extends Authenticatable implements FilamentUser
 {
-    use Notifiable;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
@@ -28,8 +28,8 @@ class Admin extends Authenticatable implements FilamentUser
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_superadmin' => 'boolean',
+            'password'          => 'hashed',
+            'is_superadmin'     => 'boolean',
         ];
     }
 

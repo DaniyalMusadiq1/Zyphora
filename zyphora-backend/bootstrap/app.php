@@ -16,18 +16,27 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         apiPrefix: 'api',
     )
+    ->withProviders([
+        \App\Providers\Filament\AdminPanelProvider::class,
+    ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'api.signature' => VerifyApiSignature::class,
-            'app.session' => VerifyAppSessionToken::class,
+            'api.signature'   => VerifyApiSignature::class,
+            'app.session'     => VerifyAppSessionToken::class,
             'device.restrict' => DeviceRestriction::class,
-            'fraud.check' => FraudCheck::class,
-            'throttle:api' => \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
-            'throttle:auth' => \Illuminate\Routing\Middleware\ThrottleRequests::class.':auth',
-            'throttle:kyc' => \Illuminate\Routing\Middleware\ThrottleRequests::class.':kyc',
+            'fraud.check'     => FraudCheck::class,
+            'throttle:api'    => \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            'throttle:auth'   => \Illuminate\Routing\Middleware\ThrottleRequests::class.':auth',
+            'throttle:kyc'    => \Illuminate\Routing\Middleware\ThrottleRequests::class.':kyc',
         ]);
 
+        // Only runs on API routes, never touches /admin or web routes
         $middleware->prependToGroup('api', VerifyApiSignature::class);
+
+        // Exclude admin panel from any global web middleware interference
+        $middleware->validateCsrfTokens(except: [
+            'admin/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
