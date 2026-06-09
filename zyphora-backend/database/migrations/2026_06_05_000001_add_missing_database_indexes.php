@@ -88,7 +88,7 @@ return new class extends Migration
             if (!Schema::hasIndex('task_completions', 'task_completions_completed_at_index')) {
                 $table->index('completed_at', 'task_completions_completed_at_index');
             }
-            if (!Schema::hasIndex('task_completions', 'task_completions_status_index')) {
+            if (Schema::hasColumn('task_completions', 'status') && !Schema::hasIndex('task_completions', 'task_completions_status_index')) {
                 $table->index('status', 'task_completions_status_index');
             }
         });
@@ -178,7 +178,9 @@ return new class extends Migration
 
         Schema::table('task_completions', function (Blueprint $table) {
             $table->dropIndex('task_completions_completed_at_index');
-            $table->dropIndex('task_completions_status_index');
+            if (Schema::hasColumn('task_completions', 'status')) {
+                $table->dropIndex('task_completions_status_index');
+            }
         });
 
         Schema::table('daily_earnings', function (Blueprint $table) {
